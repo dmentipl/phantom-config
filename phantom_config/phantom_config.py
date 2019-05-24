@@ -86,15 +86,12 @@ class PhantomConfig:
         self.variables = variables
         self.values = values
         self.comments = comments
-        self.config = tuple(
-            [
-                ConfigVariable(var, val, comment, block)
-                for var, val, comment, block in zip(
-                    variables, values, comments, blocks
-                )
-            ]
-        )
-        self._make_attrs()
+        self.config = {
+            var: ConfigVariable(var, val, comment, block)
+            for var, val, comment, block in zip(
+                variables, values, comments, blocks
+            )
+        }
 
     def write_json(self, filename):
         """Write config to JSON file.
@@ -127,22 +124,12 @@ class PhantomConfig:
 
     def summary(self):
         """Print summary of config."""
-        for entry in self.config:
-            print(f'{entry.name:25} {entry.value}')
-
-    def get_config(self, name):
-        """Get ConfigVariable for variable 'name'.
-
-        Parameters
-        ----------
-        name : str
-            Name of variable.
-
-        Returns
-        -------
-        ConfigVariable
-        """
-        return self.config[self.variables.index(name)]
+        name_width = 25
+        print()
+        print(18*' ' + 'variable   value')
+        print(18*' ' + '--------   -----')
+        for entry in self.config.values():
+            print(f'{entry.name.rjust(name_width)}   {entry.value}')
 
     def to_ordered_dict(self, only_values=False):
         """Convert config to ordered dictionary.
@@ -172,7 +159,7 @@ class PhantomConfig:
                 self.variables,
                 self.values,
                 self.comments,
-                [config.block for config in self.config],
+                [config.block for config in self.config.values()],
             )
         )
 
@@ -222,10 +209,20 @@ class PhantomConfig:
         block_dict = dict()
         for block in self.blocks:
             block_dict[block] = list()
-            names = [conf.name for conf in self.config if conf.block == block]
-            values = [conf.value for conf in self.config if conf.block == block]
+            names = [
+                conf.name
+                for conf in self.config.values()
+                if conf.block == block
+            ]
+            values = [
+                conf.value
+                for conf in self.config.values()
+                if conf.block == block
+            ]
             comments = [
-                conf.comment for conf in self.config if conf.block == block
+                conf.comment
+                for conf in self.config.values()
+                if conf.block == block
             ]
             for name, value, comment in zip(names, values, comments):
                 block_dict[block].append([name, value, comment])
@@ -233,7 +230,7 @@ class PhantomConfig:
 
     def _make_attrs(self):
         """Make each config variable an attribute."""
-        for entry in self.config:
+        for entry in self.config.values():
             setattr(self, entry.name, entry)
 
     def __repr__(self):
