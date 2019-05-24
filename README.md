@@ -8,24 +8,27 @@ Phantom config files: parse, convert, make.
 import phantom_config as pc
 
 # Read in Phantom config file
-infile = pc.read('prefix.in')
+config = pc.read('prefix.in')
 
 # Print a summary
-infile.summary()
+config.summary()
 
 # Get a ConfigVariable namedtuple
-logfile = infile.get_config('logfile')
-logfile.variable
+logfile = config.config['logfile']
+logfile.name
 logfile.value
 logfile.comment
 logfile.block
 
 # Convert to an ordered dictionary
-ordered_dict = infile.to_ordered_dict()
+ordered_dict = config.to_ordered_dict()
 
 # Write to JSON
-infile.write_json('prefix-in.json')
+config.write_json('prefix-in.json')
 
 # Read in JSON
-infile_json = pc.read('prefix-in.json')
+config_json = pc.read_json('prefix-in.json')
+
+# Check that the configs are equal
+config.config == config_json.config
 ```
