@@ -117,6 +117,16 @@ class PhantomConfig:
         for entry in self.config:
             print(f'{entry.name:25} {entry.value}')
 
+    def get_config(self, name):
+        """Get value of variable by name.
+
+        Parameters
+        ----------
+        name : str
+            Name of variable.
+        """
+        return self.config[self.variables.index(name)]
+
     def _to_ordered_dict(self, only_values=False):
         """Convert config to ordered dictionary.
 
