@@ -330,8 +330,3 @@ def _phantom_float_format(val, length=None, justify=None):
     else:
         raise TypeError('length must be int')
     return string
-
-
-if __name__ == '__main__':
-    infile = PhantomConfig('twhya.in')
-    setupfile = PhantomConfig('twhya.setup')
