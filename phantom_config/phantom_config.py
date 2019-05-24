@@ -24,7 +24,7 @@ class PhantomConfig:
         Name of Phantom config file. E.g. prefix.in or prefix.setup.
     """
 
-    def __init__(self, filename):
+    def __init__(self, filename=None, filetype=None):
 
         self.filename = None
         self.variables = None
@@ -35,7 +35,17 @@ class PhantomConfig:
         self.header = None
         self.blocks = None
 
-        self.read_phantom(filename)
+        if filename is not None:
+            if filetype is None:
+                print('Assuming Phantom config file.')
+                self.read_phantom(filename)
+            else:
+                if filetype.lower() == 'phantom':
+                    self.read_phantom(filename)
+                elif filetype.lower() == 'json':
+                    self.read_json(filename)
+        else:
+            raise ValueError('Need a file name.')
 
     def write_json(self, filename):
         """Write config to JSON file.
@@ -69,9 +79,8 @@ class PhantomConfig:
     def read_phantom(self, filename):
 
         self.filename = filename
-        header, variables, values, comments, blocks = self._parse_phantom_file(
-            filename
-        )
+        datetime_, header, conf = _parse_phantom_file(filename)
+        variables, values, comments, blocks = conf[0], conf[1], conf[2], conf[3]
         self.header = header
         self.blocks = blocks
         self.variables = variables
@@ -173,41 +182,6 @@ class PhantomConfig:
 
         return lines[:-1]
 
-    def _parse_phantom_file(self, filename):
-        """Parse config file."""
-
-        self._get_datetime_from_phantom_infile(filename)
-
-        with open(filename, mode='r') as fp:
-            variables = list()
-            values = list()
-            comments = list()
-            header = list()
-            blocks = list()
-            block_names = list()
-            _read_in_header = False
-            for line in fp:
-                if line.startswith('#'):
-                    if not _read_in_header:
-                        header.append(line.strip().split('# ')[1])
-                    else:
-                        block_name = line.strip().split('# ')[1]
-                        block_names.append(block_name)
-                if not _read_in_header and line == '\n':
-                    _read_in_header = True
-                line = line.split('#', 1)[0].strip()
-                if line:
-                    line, comment = line.split('!')
-                    comments.append(comment.strip())
-                    variable, value = line.split('=')
-                    variables.append(variable.strip())
-                    value = value.strip()
-                    value = _convert_value_type(value)
-                    values.append(value)
-                    blocks.append(block_name)
-
-        return header, variables, values, comments, blocks
-
     def _dictionary_in_blocks(self):
         """Return dictionary of config values with blocks as keys."""
         block_dict = dict()
@@ -222,19 +196,6 @@ class PhantomConfig:
                 block_dict[block].append([name, value, comment])
         return block_dict
 
-    def _get_datetime_from_phantom_infile(self, filename):
-        """Get datetime from Phantom timestamp in infile.
-
-        Phantom timestamp is like dd/mm/yyyy hh:mm:s.ms
-        """
-        with open(filename, mode='r') as fp:
-            for line in fp:
-                if 'Runtime options file for Phantom, written' in line:
-                    date, time = line.split()[-2:]
-                    self.datetime = datetime.datetime.strptime(
-                        date + time, '%d/%m/%Y%H:%M:%S.%f'
-                    )
-
     def _make_attrs(self):
         """Make each config variable an attribute."""
         for entry in self.config:
@@ -245,6 +206,58 @@ class PhantomConfig:
 
     def __str__(self):
         return str(f'<PhantomConfig: "{self.filename}">')
+
+
+def _parse_phantom_file(filename):
+    """Parse config file."""
+
+    datetime_ = _get_datetime_from_phantom_infile(filename)
+
+    with open(filename, mode='r') as fp:
+        variables = list()
+        values = list()
+        comments = list()
+        header = list()
+        blocks = list()
+        block_names = list()
+        _read_in_header = False
+        for line in fp:
+            if line.startswith('#'):
+                if not _read_in_header:
+                    header.append(line.strip().split('# ')[1])
+                else:
+                    block_name = line.strip().split('# ')[1]
+                    block_names.append(block_name)
+            if not _read_in_header and line == '\n':
+                _read_in_header = True
+            line = line.split('#', 1)[0].strip()
+            if line:
+                line, comment = line.split('!')
+                comments.append(comment.strip())
+                variable, value = line.split('=')
+                variables.append(variable.strip())
+                value = value.strip()
+                value = _convert_value_type(value)
+                values.append(value)
+                blocks.append(block_name)
+
+    return datetime_, header, (variables, values, comments, blocks)
+
+
+def _get_datetime_from_phantom_infile(filename):
+    """Get datetime from Phantom timestamp in infile.
+
+    Phantom timestamp is like dd/mm/yyyy hh:mm:s.ms
+    """
+    with open(filename, mode='r') as fp:
+        for line in fp:
+            if 'Runtime options file for Phantom, written' in line:
+                date, time = line.split()[-2:]
+                datetime_ = datetime.datetime.strptime(
+                    date + time, '%d/%m/%Y%H:%M:%S.%f'
+                )
+
+    return datetime_
 
 
 def _convert_value_type(value):
