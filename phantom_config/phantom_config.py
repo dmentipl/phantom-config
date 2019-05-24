@@ -69,8 +69,7 @@ class PhantomConfig:
 
         self.header = header
         self.datetime = datetime_
-        self.block_names = block_names
-        self.blocks = blocks
+        self.blocks = block_names
         self.variables = variables
         self.values = values
         self.comments = comments
