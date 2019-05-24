@@ -97,7 +97,7 @@ class PhantomConfig:
                 fp,
                 indent=4,
                 sort_keys=False,
-                default=str,
+                default=_convert_json_to_datetime
             )
 
     def write_phantom(self, filename):
@@ -282,7 +282,7 @@ def _parse_phantom_file(filename):
                 variable, value = line.split('=')
                 variables.append(variable.strip())
                 value = value.strip()
-                value = _convert_value_type(value)
+                value = _convert_value_type_phantom(value)
                 values.append(value)
                 blocks.append(block_name)
 
@@ -305,7 +305,25 @@ def _get_datetime_from_phantom_infile(filename):
     return datetime_
 
 
-def _convert_value_type(value):
+def _convert_json_to_datetime(val):
+    """Convert datetime string from JSON config to datetime.timedelta.
+
+    Parameters
+    ----------
+    value : str
+        The value as a string.
+
+    Returns
+    -------
+    value
+        The value as datetime.timedelta
+    """
+    hhh = int(val.total_seconds() / 3600)
+    mm = int((val.total_seconds() - 3600 * hhh) / 60)
+    return f'{hhh:03}:{mm:02}'
+
+
+def _convert_value_type_phantom(value):
     """Convert string from Phantom config to appropriate type.
 
     Parameters
