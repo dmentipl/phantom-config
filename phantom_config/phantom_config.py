@@ -22,6 +22,8 @@ class PhantomConfig:
     ----------
     filename : str or pathlib.Path
         Name of Phantom config file. E.g. prefix.in or prefix.setup.
+    filetype : str, optional
+        Assumes default Phantom config type. Alternative is 'json'.
     """
 
     def __init__(self, filename=None, filetype=None):
@@ -38,45 +40,23 @@ class PhantomConfig:
         if filename is not None:
             if filetype is None:
                 print('Assuming Phantom config file.')
-                self.read_phantom(filename)
-            else:
+                filetype = 'phantom'
+            elif isinstance(filetype, str):
                 if filetype.lower() == 'phantom':
-                    self.read_phantom(filename)
+                    _filetype = 'phantom'
                 elif filetype.lower() == 'json':
-                    self.read_json(filename)
+                    _filetype = 'json'
+                else:
+                    raise ValueError('Cannot determine file type.')
+            else:
+                raise TypeError('filetype must be str.')
         else:
             raise ValueError('Need a file name.')
 
-    def write_json(self, filename):
-        """Write config to JSON file.
+        self._initialize(filename, _filetype)
 
-        Parameters
-        ----------
-        filename : str or pathlib.Path
-            The name of the JSON output file.
-        """
-        with open(filename, mode='w') as fp:
-            json.dump(
-                self._dictionary_in_blocks(),
-                fp,
-                indent=4,
-                sort_keys=False,
-                default=str,
-            )
-
-    def read_json(self, filename):
-        """Read config from JSON file.
-
-        Parameters
-        ----------
-        filename : str or pathlib.Path
-            The name of the JSON input file.
-        """
-        with open(filename, mode='r') as fp:
-            return json.load(fp)
-        self.filename = filename
-
-    def read_phantom(self, filename):
+    def _initialize(self, filename, filetype):
+        """Initialize PhantomConfig."""
 
         self.filename = filename
         datetime_, header, conf = _parse_phantom_file(filename)
@@ -95,6 +75,35 @@ class PhantomConfig:
             ]
         )
         self._make_attrs()
+
+    def _parse_json_file(self, filename):
+        """Read config from JSON file.
+
+        Parameters
+        ----------
+        filename : str or pathlib.Path
+            The name of the JSON input file.
+        """
+        with open(filename, mode='r') as fp:
+            return json.load(fp)
+        self.filename = filename
+
+    def write_json(self, filename):
+        """Write config to JSON file.
+
+        Parameters
+        ----------
+        filename : str or pathlib.Path
+            The name of the JSON output file.
+        """
+        with open(filename, mode='w') as fp:
+            json.dump(
+                self._dictionary_in_blocks(),
+                fp,
+                indent=4,
+                sort_keys=False,
+                default=str,
+            )
 
     def write_phantom(self, filename):
         """Write config to Phantom config file.
@@ -209,7 +218,7 @@ class PhantomConfig:
 
 
 def _parse_phantom_file(filename):
-    """Parse config file."""
+    """Parse Phantom config file."""
 
     datetime_ = _get_datetime_from_phantom_infile(filename)
 
