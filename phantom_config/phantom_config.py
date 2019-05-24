@@ -18,8 +18,13 @@ class PhantomConfig:
     ----------
     filename : str or pathlib.Path
         Name of Phantom config file. E.g. prefix.in or prefix.setup.
-    filetype : str, optional
+
+    filetype : str
         Assumes default Phantom config type. Alternative is 'json'.
+
+    dictionary : dict
+        A dictionary encoding a Phantom config structure like:
+            {'variable': [value, comment, block], ...}
     """
 
     def __init__(self, filename=None, filetype=None, dictionary=None):
