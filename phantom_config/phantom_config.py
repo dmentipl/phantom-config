@@ -97,7 +97,7 @@ class PhantomConfig:
                 fp,
                 indent=4,
                 sort_keys=False,
-                default=_convert_json_to_datetime
+                default=_convert_json_to_datetime,
             )
 
     def write_phantom(self, filename):
@@ -241,10 +241,16 @@ def _parse_json_file(filename):
     values = list()
     comments = list()
     for key, item in json_dict.items():
-        for ll in item:
-            variables.append(ll[0])
-            values.append(ll[1])
-            comments.append(ll[2])
+        for var, val, comment in item:
+            if isinstance(val, str):
+                if re.fullmatch(r'\d\d\d:\d\d', val):
+                    val = val.split(':')
+                    val = datetime.timedelta(
+                        hours=int(val[0]), minutes=int(val[1])
+                    )
+            variables.append(var)
+            values.append(val)
+            comments.append(comment)
             blocks.append(key)
 
     datetime_ = None
