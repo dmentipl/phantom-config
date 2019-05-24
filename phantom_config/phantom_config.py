@@ -66,7 +66,9 @@ class PhantomConfig:
             datetime_, header, block_names, conf = _parse_json_file(filename)
 
         variables, values, comments, blocks = conf[0], conf[1], conf[2], conf[3]
+
         self.header = header
+        self.datetime = datetime_
         self.block_names = block_names
         self.blocks = blocks
         self.variables = variables
