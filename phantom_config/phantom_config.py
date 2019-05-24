@@ -1,9 +1,3 @@
-"""
-Parse Phantom config files.
-
-Daniel Mentiplay, 2019.
-"""
-
 import datetime
 import json
 import re
