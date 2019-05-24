@@ -11,7 +11,9 @@ from collections import OrderedDict, namedtuple
 
 import numpy as np
 
-Config = namedtuple('Config', ['name', 'value', 'comment', 'block'])
+ConfigVariable = namedtuple(
+    'ConfigVariable', ['name', 'value', 'comment', 'block']
+)
 
 
 class PhantomConfig:
@@ -75,7 +77,7 @@ class PhantomConfig:
         self.comments = comments
         self.config = tuple(
             [
-                Config(var, val, comment, block)
+                ConfigVariable(var, val, comment, block)
                 for var, val, comment, block in zip(
                     variables, values, comments, blocks
                 )
@@ -118,16 +120,20 @@ class PhantomConfig:
             print(f'{entry.name:25} {entry.value}')
 
     def get_config(self, name):
-        """Get value of variable by name.
+        """Get ConfigVariable for variable 'name'.
 
         Parameters
         ----------
         name : str
             Name of variable.
+
+        Returns
+        -------
+        ConfigVariable
         """
         return self.config[self.variables.index(name)]
 
-    def _to_ordered_dict(self, only_values=False):
+    def to_ordered_dict(self, only_values=False):
         """Convert config to ordered dictionary.
 
         Parameters
@@ -147,18 +153,16 @@ class PhantomConfig:
         """
         if only_values:
             return OrderedDict(
-                ((var, val) for var, val in zip(self.variables, self.values))
+                [var, val] for var, val in zip(self.variables, self.values)
             )
         return OrderedDict(
-            (
-                (var, (val, comment, block))
+                [var, [val, comment, block]]
                 for var, val, comment, block in zip(
                     self.variables,
                     self.values,
                     self.comments,
                     [config.block for config in self.config],
                 )
-            )
         )
 
     def _to_phantom_lines(self):
