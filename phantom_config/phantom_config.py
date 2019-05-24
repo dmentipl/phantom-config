@@ -59,9 +59,15 @@ class PhantomConfig:
         """Initialize PhantomConfig."""
 
         self.filename = filename
-        datetime_, header, conf = _parse_phantom_file(filename)
+
+        if filetype == 'phantom':
+            datetime_, header, block_names, conf = _parse_phantom_file(filename)
+        elif filetype == 'json':
+            datetime_, header, block_names, conf = _parse_json_file(filename)
+
         variables, values, comments, blocks = conf[0], conf[1], conf[2], conf[3]
         self.header = header
+        self.block_names = block_names
         self.blocks = blocks
         self.variables = variables
         self.values = values
@@ -75,18 +81,6 @@ class PhantomConfig:
             ]
         )
         self._make_attrs()
-
-    def _parse_json_file(self, filename):
-        """Read config from JSON file.
-
-        Parameters
-        ----------
-        filename : str or pathlib.Path
-            The name of the JSON input file.
-        """
-        with open(filename, mode='r') as fp:
-            return json.load(fp)
-        self.filename = filename
 
     def write_json(self, filename):
         """Write config to JSON file.
@@ -217,6 +211,31 @@ class PhantomConfig:
         return str(f'<PhantomConfig: "{self.filename}">')
 
 
+def _parse_json_file(filename):
+    """Parse JSON config file."""
+
+    with open(filename, mode='r') as fp:
+        json_dict = json.load(fp)
+
+    block_names = list(json_dict.keys())
+
+    blocks = list()
+    variables = list()
+    values = list()
+    comments = list()
+    for key, item in json_dict.items():
+        for ll in item:
+            variables.append(ll[0])
+            values.append(ll[1])
+            comments.append(ll[2])
+            blocks.append(key)
+
+    datetime_ = None
+    header = None
+
+    return datetime_, header, block_names, (variables, values, comments, blocks)
+
+
 def _parse_phantom_file(filename):
     """Parse Phantom config file."""
 
@@ -250,7 +269,7 @@ def _parse_phantom_file(filename):
                 values.append(value)
                 blocks.append(block_name)
 
-    return datetime_, header, (variables, values, comments, blocks)
+    return datetime_, header, block_names, (variables, values, comments, blocks)
 
 
 def _get_datetime_from_phantom_infile(filename):
