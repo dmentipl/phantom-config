@@ -22,7 +22,7 @@ class PhantomConfig:
         Assumes default Phantom config type. Alternative is 'json'.
     """
 
-    def __init__(self, filename=None, filetype=None):
+    def __init__(self, filename=None, filetype=None, dictionary=None):
 
         self.filename = None
         self.variables = None
@@ -33,6 +33,7 @@ class PhantomConfig:
         self.header = None
         self.blocks = None
 
+        _filetype = None
         if filename is not None:
             if filetype is None:
                 print('Assuming Phantom config file.')
@@ -47,19 +48,30 @@ class PhantomConfig:
             else:
                 raise TypeError('filetype must be str.')
         else:
-            raise ValueError('Need a file name.')
+            if dictionary is None:
+                raise ValueError('Need a file name or dictionary.')
 
-        self._initialize(filename, _filetype)
+        if _filetype is None:
+            self._initialize(dictionary=dictionary)
+        else:
+            self._initialize(filename=filename, filetype=_filetype)
 
-    def _initialize(self, filename, filetype):
+    def _initialize(self, filename=None, filetype=None, dictionary=None):
         """Initialize PhantomConfig."""
 
         self.filename = filename
 
-        if filetype == 'phantom':
-            datetime_, header, block_names, conf = _parse_phantom_file(filename)
-        elif filetype == 'json':
-            datetime_, header, block_names, conf = _parse_json_file(filename)
+        if filetype is not None:
+            if filetype == 'phantom':
+                datetime_, header, block_names, conf = _parse_phantom_file(
+                    filename
+                )
+            elif filetype == 'json':
+                datetime_, header, block_names, conf = _parse_json_file(
+                    filename
+                )
+        else:
+            datetime_, header, block_names, conf = _parse_dict(dictionary)
 
         variables, values, comments, blocks = conf[0], conf[1], conf[2], conf[3]
 
@@ -150,13 +162,13 @@ class PhantomConfig:
                 [var, val] for var, val in zip(self.variables, self.values)
             )
         return OrderedDict(
-                [var, [val, comment, block]]
-                for var, val, comment, block in zip(
-                    self.variables,
-                    self.values,
-                    self.comments,
-                    [config.block for config in self.config],
-                )
+            [var, [val, comment, block]]
+            for var, val, comment, block in zip(
+                self.variables,
+                self.values,
+                self.comments,
+                [config.block for config in self.config],
+            )
         )
 
     def _to_phantom_lines(self):
@@ -224,6 +236,31 @@ class PhantomConfig:
 
     def __str__(self):
         return str(f'<PhantomConfig: "{self.filename}">')
+
+
+def _parse_dict(dictionary):
+    """Parse dictionary {'variable': [value, comment, block], ...}."""
+
+    block_names = list(dictionary.keys())
+
+    blocks = list()
+    variables = list()
+    values = list()
+    comments = list()
+    for key, item in dictionary.items():
+        var = key
+        val = item[0]
+        comment = item[1]
+        block = item[2]
+        variables.append(var)
+        values.append(val)
+        comments.append(comment)
+        blocks.append(block)
+
+    datetime_ = None
+    header = None
+
+    return datetime_, header, block_names, (variables, values, comments, blocks)
 
 
 def _parse_json_file(filename):

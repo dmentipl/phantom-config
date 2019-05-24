@@ -12,7 +12,11 @@ Daniel Mentiplay, 2019.
 from .phantom_config import PhantomConfig
 
 
-def read(filename):
+def read_dict(dictionary):
+    return PhantomConfig(dictionary=dictionary)
+
+
+def read_config(filename):
     return PhantomConfig(filename=filename, filetype='phantom')
 
 
@@ -20,4 +24,4 @@ def read_json(filename):
     return PhantomConfig(filename=filename, filetype='json')
 
 
-__all__ = ['PhantomConfig', 'read', 'read_json']
+__all__ = ['read_config', 'read_dict', 'read_json']
