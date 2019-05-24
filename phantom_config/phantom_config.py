@@ -340,6 +340,7 @@ def _get_datetime_from_phantom_infile(filename):
 
     Phantom timestamp is like dd/mm/yyyy hh:mm:s.ms
     """
+    datetime_ = None
     with open(filename, mode='r') as fp:
         for line in fp:
             if 'Runtime options file for Phantom, written' in line:
