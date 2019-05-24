@@ -170,6 +170,8 @@ class PhantomConfig:
             The config file as a list of lines.
         """
 
+        _length = 12
+
         lines = list()
         [lines.append('# ' + header_line + '\n') for header_line in self.header]
         lines.append('\n')
@@ -177,18 +179,22 @@ class PhantomConfig:
         for block, block_contents in self._dictionary_in_blocks().items():
             lines.append('# ' + block + '\n')
             for var, val, comment in block_contents:
-                if isinstance(val, float):
+                if isinstance(val, bool):
+                    val_string = (
+                        'T'.rjust(_length) if val else 'F'.rjust(_length)
+                    )
+                elif isinstance(val, float):
                     val_string = _phantom_float_format(
-                        val, length=12, justify='right'
+                        val, length=_length, justify='right'
                     )
                 elif isinstance(val, int):
-                    val_string = f'{val:>12}'
+                    val_string = f'{val:>{_length}}'
                 elif isinstance(val, str):
-                    val_string = f'{val:>12}'
+                    val_string = f'{val:>{_length}}'
                 elif isinstance(val, datetime.timedelta):
                     hhh = int(val.total_seconds() / 3600)
                     mm = int((val.total_seconds() - 3600 * hhh) / 60)
-                    val_string = 6 * ' ' + f'{hhh:03}:{mm:02}'
+                    val_string = f'{hhh:03}:{mm:02}'.rjust(_length)
                 else:
                     raise ValueError('Cannot determine type')
                 lines.append(f'{var:>20} = ' + val_string + f'   ! {comment}\n')
@@ -313,7 +319,7 @@ def _convert_value_type(value):
         The value as appropriate type.
     """
 
-    float_regexes = [r'\d*\.\d*E[-+]\d*', r'-*\d*\.\d*']
+    float_regexes = [r'\d*\.\d*[Ee][-+]\d*', r'-*\d*\.\d*']
     timedelta_regexes = [r'\d\d\d:\d\d']
     int_regexes = [r'-*\d+']
 
