@@ -1,6 +1,6 @@
-# phantom-config
+# Phantom config
 
-Phantom config files: parse, convert, make.
+[Phantom](https://bitbucket.org/danielprice/phantom) config files: parse, convert, generate.
 
 ## How to use
 
@@ -8,7 +8,7 @@ Phantom config files: parse, convert, make.
 import phantom_config as pc
 
 # Read in Phantom config file
-config = pc.read('prefix.in')
+config = pc.read_config('prefix.in')
 
 # Print a summary
 config.summary()
