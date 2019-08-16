@@ -244,8 +244,6 @@ class PhantomConfig:
 def _parse_dict(dictionary):
     """Parse dictionary {'variable': [value, comment, block], ...}."""
 
-    block_names = list(dictionary.keys())
-
     blocks = list()
     variables = list()
     values = list()
@@ -259,6 +257,8 @@ def _parse_dict(dictionary):
         values.append(val)
         comments.append(comment)
         blocks.append(block)
+
+    block_names = list(OrderedDict.fromkeys(blocks))
 
     datetime_ = None
     header = None
