@@ -175,8 +175,9 @@ class PhantomConfig:
         _length = 12
 
         lines = list()
-        [lines.append('# ' + header_line + '\n') for header_line in self.header]
-        lines.append('\n')
+        if self.header is not None:
+            [lines.append('# ' + header_line + '\n') for header_line in self.header]
+            lines.append('\n')
 
         for block, block_contents in self._dictionary_in_blocks().items():
             lines.append('# ' + block + '\n')
