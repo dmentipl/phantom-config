@@ -172,6 +172,59 @@ class PhantomConfig:
             )
         )
 
+    def add_variable(self, variable, value, comment=None, block=None):
+        """Add a variable to the config.
+
+        Parameters
+        ----------
+        variable : str
+            The name of the variable.
+        value
+            The value of the variable.
+        comment : str
+            The comment string describing the variable.
+        block : str
+            The block to which the variable is associated.
+        """
+
+        if comment is None:
+            comment = 'No description'
+        if block is None:
+            block = 'Miscellaneous'
+
+        self.config[variable] = ConfigVariable(variable, value, comment, block)
+
+    def remove_variable(self, variable):
+        """Remove a variable from the config.
+
+        Parameters
+        ----------
+        variable : str
+            The variable to remove.
+        """
+        self.config.pop(variable)
+
+    def change_value(self, variable, value):
+        """Change a value on a variable.
+
+        Parameters
+        ----------
+        variable : str
+            Change the value of this variable.
+        value
+            Set the variable to this value.
+        """
+
+        if variable not in self.config:
+            raise ValueError(f'{variable} not in config')
+
+        tmp = self.config[variable]
+
+        if not isinstance(value, type(tmp[1])):
+            raise ValueError('Value and variable are not compatible')
+
+        self.config[variable] = ConfigVariable(tmp[0], value, tmp[2], tmp[3])
+
     def _to_phantom_lines(self):
         """Convert config to a list of lines in Phantom style.
 
