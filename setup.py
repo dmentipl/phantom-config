@@ -1,10 +1,29 @@
+import io
+import pathlib
+import re
+
 from setuptools import setup
 
-setup(name='phantomconfig',
-      version='0.1',
-      description='Phantom config files',
-      url='http://github.com/dmentipl/phantom-config',
-      author='Daniel Mentiplay',
-      license='MIT',
-      packages=['phantomconfig'],
-      zip_safe=False)
+version = re.search(
+    r'__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
+    io.open('phantomconfig/__init__.py', encoding='utf_8_sig').read(),
+).group(1)
+
+
+def readfile(filename):
+    with open(filename) as fp:
+        contents = fp.read()
+    return contents
+
+
+setup(
+    name='phantomconfig',
+    version=version,
+    author='Daniel Mentiplay',
+    packages=['phantomconfig'],
+    url='http://github.com/dmentipl/phantom-config',
+    license='MIT',
+    description='Phantom config files: parse, convert, modify, and generate.',
+    long_description=readfile(pathlib.Path('README.md').resolve()),
+    install_requires=readfile(pathlib.Path('requirements.txt').resolve()),
+)
