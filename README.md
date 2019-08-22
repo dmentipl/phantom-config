@@ -3,19 +3,28 @@ Phantom config
 
 > [Phantom](https://bitbucket.org/danielprice/phantom) config files: parse, convert, modify, and  generate.
 
-`phantomconfig` can read Phantom `.in` and `.setup` files. (They have the same format.) You can, for example:
+phantom-config can read Phantom `.in` and `.setup` files. (They have the same format.) You can, for example:
 
 - modify config values,
 - add new variables,
 - write the config as a JSON file,
 - generate a config file from a dictionary.
 
+Installation
+------------
+
+Install phantom-config with pip
+
+```
+pip install phantomconfig
+```
+
 Usage
 -----
 
 ### Basic usage
 
-Import `phantomconfig` as `pc`.
+Import phantom-config as `pc`.
 
 ```python
 >>> import phantomconfig as pc
