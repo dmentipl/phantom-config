@@ -1,11 +1,11 @@
 # Phantom config
 
-[Phantom](https://bitbucket.org/danielprice/phantom) config files: parse, convert, generate.
+[Phantom](https://bitbucket.org/danielprice/phantom) config files: parse, convert, modify, and  generate.
 
 ## How to use
 
 ```python
-import phantom_config as pc
+import phantomconfig as pc
 
 # Read in Phantom config file
 config = pc.read_config('prefix.in')

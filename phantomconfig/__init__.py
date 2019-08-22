@@ -2,14 +2,14 @@
 Parse Phantom config files
 --------------------------
 
-phantom_config is designed to read and write the Phantom config file
+phantomconfig is designed to read and write the Phantom config file
 format. And to convert to and from JSON. Files usually have names like
 prefix.in or prefix.setup.
 
 Daniel Mentiplay, 2019.
 """
 
-from .phantom_config import PhantomConfig
+from .phantomconfig import PhantomConfig
 
 
 def read_dict(dictionary):
