@@ -31,13 +31,9 @@ class PhantomConfig:
 
         filepath = None
 
-        self.variables = None
-        self.values = None
-        self.comments = None
         self.config = None
         self.datetime = None
         self.header = None
-        self.blocks = None
 
         if filename is not None:
 
@@ -93,14 +89,26 @@ class PhantomConfig:
 
         self.header = header
         self.datetime = datetime
-        self.blocks = block_names
-        self.variables = variables
-        self.values = values
-        self.comments = comments
         self.config = {
             var: ConfigVariable(var, val, comment, block)
             for var, val, comment, block in zip(variables, values, comments, blocks)
         }
+
+    @property
+    def variables(self):
+        return [self.config[key].name for key in self.config]
+
+    @property
+    def values(self):
+        return [self.config[key].value for key in self.config]
+
+    @property
+    def comments(self):
+        return [self.config[key].comment for key in self.config]
+
+    @property
+    def blocks(self):
+        return [self.config[key].block for key in self.config]
 
     def write_json(self, filename):
         """Write config to JSON file.
