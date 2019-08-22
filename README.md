@@ -18,65 +18,71 @@ Usage
 Import `phantomconfig` as `pc`.
 
 ```python
-import phantomconfig as pc
+>>> import phantomconfig as pc
 ```
 
 To read in a Phantom config file
 
 ```python
-input_file = pc.read_config('prefix.in')
+>>> input_file = pc.read_config('prefix.in')
 ```
 
 Print a summary
 
 ```python
-input_file.summary()
+>>> input_file.summary()
 ```
 
 The variables, with their values, comment string, and the block they are a member of, are stored in a dictionary accessed by the `.config` method.
 
 ```python
-dtmax = input_file.config['dtmax']
+>>> dtmax = input_file.config['dtmax']
 ```
 
 The keys of this dictionary correspond to the variable name, and values are a `ConfigVariable` named tuple with the variable name, value, comment, and block.
 
 ```python
-dtmax.name
-dtmax.value
-dtmax.comment
-dtmax.block
+>>> dtmax.name
+>>> dtmax.value
+>>> dtmax.comment
+>>> dtmax.block
 ```
 
 If you like, you can write the Phantom config as a JSON file, and you can read the JSON file.
 
 ```python
-input_file.write_json('prefix-in.json')
-json_file = pc.read_json('prefix-in.json')
+>>> input_file.write_json('prefix-in.json')
+>>> json_file = pc.read_json('prefix-in.json')
 ```
 
 Check that the configs are equal
 
 ```python
-input_file.config == json_file.config
+>>> input_file.config == json_file.config
 ```
 
 You can add a new variable, remove a variable, and change the value of a variable.
 
 ```python
 # Add new variable
-input_file.add_variable(
-    'new_var',
-    12345678,
-    comment='Sets thing',
-    block='options controlling things',
-)
+>>> input_file.add_variable(
+... 'new_var',
+... 12345678,
+... comment='Sets thing',
+... block='options controlling things',
+... )
 
 # Remove a variable
-input_file.remove_variable('dtmax')
+>>> input_file.remove_variable('dtmax')
 
 # Change the value of a variable
-input_file.change_value('dumpfile', 'new_dumpfile_name')
+>>> input_file.change_value('dumpfile', 'new_dumpfile_name')
+```
+
+Then you can write the Phantom config file with the modified values.
+
+```python
+>>> input_file.write_phantom('new.in')
 ```
 
 Examples
@@ -87,20 +93,20 @@ Examples
 You can create a Phantom `.setup` file from a Python dictionary. First create the dictionary
 
 ```python
-setup = {
-    'cs': [cs, 'sound speed', 'gas properties'],
-    'npart': [npart, 'number of particles in x direction', 'gas properties'],
-    'rhozero': [rhozero, 'initial density', 'gas properties'],
-    'ilattice': [ilattice, 'lattice type', 'gas properties'],
-}
+>>> setup = {
+... 'cs': [cs, 'sound speed', 'gas properties'],
+... 'npart': [npart, 'number of particles in x direction', 'gas properties'],
+... 'rhozero': [rhozero, 'initial density', 'gas properties'],
+... 'ilattice': [ilattice, 'lattice type', 'gas properties'],
+... }
 ```
 
 Then you can read the dictionary with `phantomconfig`, and write to a Phantom `.setup` file
 
 ```python
-setup_config = pc.read_dict(setup)
-setup_config.header = ['input file for some particular setup routine']
-setup_config.write_phantom('filename.setup')
+>>> setup_config = pc.read_dict(setup)
+>>> setup_config.header = ['input file for some particular setup routine']
+>>> setup_config.write_phantom('filename.setup')
 ```
 
 This writes a file like
