@@ -30,7 +30,6 @@ class PhantomConfig:
     def __init__(self, filename=None, filetype=None, dictionary=None):
 
         filepath = None
-        filetype = None
 
         self.variables = None
         self.values = None
