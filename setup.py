@@ -9,12 +9,9 @@ version = re.search(
     io.open('phantomconfig/__init__.py', encoding='utf_8_sig').read(),
 ).group(1)
 
-
-def readfile(filename):
-    with open(filename) as fp:
-        contents = fp.read()
-    return contents
-
+here = pathlib.Path(__file__).parent
+long_description = (here / 'README.md').read_text()
+install_requires = (here / 'requirements.txt').read_text()
 
 setup(
     name='phantomconfig',
@@ -24,6 +21,6 @@ setup(
     url='http://github.com/dmentipl/phantom-config',
     license='MIT',
     description='Phantom config files: parse, convert, modify, and generate.',
-    long_description=readfile(pathlib.Path('README.md').resolve()),
-    install_requires=readfile(pathlib.Path('requirements.txt').resolve()),
+    long_description=long_description,
+    install_requires=install_requires,
 )
