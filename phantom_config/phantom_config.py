@@ -1,13 +1,12 @@
 import datetime
 import json
+import pathlib
 import re
 from collections import OrderedDict, namedtuple
 
 import numpy as np
 
-ConfigVariable = namedtuple(
-    'ConfigVariable', ['name', 'value', 'comment', 'block']
-)
+ConfigVariable = namedtuple('ConfigVariable', ['name', 'value', 'comment', 'block'])
 
 
 class PhantomConfig:
@@ -20,7 +19,8 @@ class PhantomConfig:
         Name of Phantom config file. E.g. prefix.in or prefix.setup.
 
     filetype : str
-        Assumes default Phantom config type. Alternative is 'json'.
+        Assumes default Phantom config type, 'phantom'. Alternative is
+        'json'.
 
     dictionary : dict
         A dictionary encoding a Phantom config structure like:
@@ -29,7 +29,9 @@ class PhantomConfig:
 
     def __init__(self, filename=None, filetype=None, dictionary=None):
 
-        self.filename = None
+        filepath = None
+        filetype = None
+
         self.variables = None
         self.values = None
         self.comments = None
@@ -38,59 +40,67 @@ class PhantomConfig:
         self.header = None
         self.blocks = None
 
-        _filetype = None
         if filename is not None:
+
             if filetype is None:
                 print('Assuming Phantom config file.')
                 filetype = 'phantom'
             elif isinstance(filetype, str):
                 if filetype.lower() == 'phantom':
-                    _filetype = 'phantom'
+                    filetype = 'phantom'
                 elif filetype.lower() == 'json':
-                    _filetype = 'json'
+                    filetype = 'json'
                 else:
                     raise ValueError('Cannot determine file type.')
             else:
                 raise TypeError('filetype must be str.')
+
+            if isinstance(filename, str):
+                filepath = pathlib.Path(filename).expanduser().resolve()
+                filename = filepath.name
+            elif isinstance(filename, pathlib.Path):
+                filepath = filename.expanduser().resolve()
+                filename = filepath.name
+            if not filepath.exists():
+                raise FileNotFoundError(f'Cannot find config file: {filename}')
+
         else:
             if dictionary is None:
                 raise ValueError('Need a file name or dictionary.')
 
-        if _filetype is None:
-            self._initialize(dictionary=dictionary)
-        else:
-            self._initialize(filename=filename, filetype=_filetype)
+        if filetype is None:
+            self._initialize_from_dictionary(dictionary)
+        elif filetype == 'phantom':
+            self._initialize_from_phantom(filepath)
+        elif filetype == 'json':
+            self._initialize_from_json(filepath)
 
-    def _initialize(self, filename=None, filetype=None, dictionary=None):
+    def _initialize_from_phantom(self, filepath):
+        datetime, header, block_names, conf = _parse_phantom_file(filepath)
+        self._initialize(datetime, header, block_names, conf)
+
+    def _initialize_from_json(self, filepath):
+        datetime, header, block_names, conf = _parse_json_file(filepath)
+        self._initialize(datetime, header, block_names, conf)
+
+    def _initialize_from_dictionary(self, dictionary):
+        datetime, header, block_names, conf = _parse_dict(dictionary)
+        self._initialize(datetime, header, block_names, conf)
+
+    def _initialize(self, datetime, header, block_names, conf):
         """Initialize PhantomConfig."""
-
-        self.filename = filename
-
-        if filetype is not None:
-            if filetype == 'phantom':
-                datetime_, header, block_names, conf = _parse_phantom_file(
-                    filename
-                )
-            elif filetype == 'json':
-                datetime_, header, block_names, conf = _parse_json_file(
-                    filename
-                )
-        else:
-            datetime_, header, block_names, conf = _parse_dict(dictionary)
 
         variables, values, comments, blocks = conf[0], conf[1], conf[2], conf[3]
 
         self.header = header
-        self.datetime = datetime_
+        self.datetime = datetime
         self.blocks = block_names
         self.variables = variables
         self.values = values
         self.comments = comments
         self.config = {
             var: ConfigVariable(var, val, comment, block)
-            for var, val, comment, block in zip(
-                variables, values, comments, blocks
-            )
+            for var, val, comment, block in zip(variables, values, comments, blocks)
         }
 
     def write_json(self, filename):
@@ -126,8 +136,8 @@ class PhantomConfig:
         """Print summary of config."""
         name_width = 25
         print()
-        print(18*' ' + 'variable   value')
-        print(18*' ' + '--------   -----')
+        print(18 * ' ' + 'variable   value')
+        print(18 * ' ' + '--------   -----')
         for entry in self.config.values():
             print(f'{entry.name.rjust(name_width)}   {entry.value}')
 
@@ -183,9 +193,7 @@ class PhantomConfig:
             lines.append('# ' + block + '\n')
             for var, val, comment in block_contents:
                 if isinstance(val, bool):
-                    val_string = (
-                        'T'.rjust(_length) if val else 'F'.rjust(_length)
-                    )
+                    val_string = 'T'.rjust(_length) if val else 'F'.rjust(_length)
                 elif isinstance(val, float):
                     val_string = _phantom_float_format(
                         val, length=_length, justify='right'
@@ -210,20 +218,12 @@ class PhantomConfig:
         block_dict = dict()
         for block in self.blocks:
             block_dict[block] = list()
-            names = [
-                conf.name
-                for conf in self.config.values()
-                if conf.block == block
-            ]
+            names = [conf.name for conf in self.config.values() if conf.block == block]
             values = [
-                conf.value
-                for conf in self.config.values()
-                if conf.block == block
+                conf.value for conf in self.config.values() if conf.block == block
             ]
             comments = [
-                conf.comment
-                for conf in self.config.values()
-                if conf.block == block
+                conf.comment for conf in self.config.values() if conf.block == block
             ]
             for name, value, comment in zip(names, values, comments):
                 block_dict[block].append([name, value, comment])
@@ -233,12 +233,6 @@ class PhantomConfig:
         """Make each config variable an attribute."""
         for entry in self.config.values():
             setattr(self, entry.name, entry)
-
-    def __repr__(self):
-        return self.__str__()
-
-    def __str__(self):
-        return str(f'<PhantomConfig: "{self.filename}">')
 
 
 def _parse_dict(dictionary):
@@ -266,10 +260,10 @@ def _parse_dict(dictionary):
     return datetime_, header, block_names, (variables, values, comments, blocks)
 
 
-def _parse_json_file(filename):
+def _parse_json_file(filepath):
     """Parse JSON config file."""
 
-    with open(filename, mode='r') as fp:
+    with open(filepath, mode='r') as fp:
         json_dict = json.load(fp)
 
     block_names = list(json_dict.keys())
@@ -283,9 +277,7 @@ def _parse_json_file(filename):
             if isinstance(val, str):
                 if re.fullmatch(r'\d\d\d:\d\d', val):
                     val = val.split(':')
-                    val = datetime.timedelta(
-                        hours=int(val[0]), minutes=int(val[1])
-                    )
+                    val = datetime.timedelta(hours=int(val[0]), minutes=int(val[1]))
             variables.append(var)
             values.append(val)
             comments.append(comment)
@@ -297,12 +289,12 @@ def _parse_json_file(filename):
     return datetime_, header, block_names, (variables, values, comments, blocks)
 
 
-def _parse_phantom_file(filename):
+def _parse_phantom_file(filepath):
     """Parse Phantom config file."""
 
-    datetime_ = _get_datetime_from_phantom_infile(filename)
+    datetime_ = _get_datetime_from_phantom_infile(filepath)
 
-    with open(filename, mode='r') as fp:
+    with open(filepath, mode='r') as fp:
         variables = list()
         values = list()
         comments = list()
@@ -333,13 +325,13 @@ def _parse_phantom_file(filename):
     return datetime_, header, block_names, (variables, values, comments, blocks)
 
 
-def _get_datetime_from_phantom_infile(filename):
+def _get_datetime_from_phantom_infile(filepath):
     """Get datetime from Phantom timestamp in infile.
 
     Phantom timestamp is like dd/mm/yyyy hh:mm:s.ms
     """
     datetime_ = None
-    with open(filename, mode='r') as fp:
+    with open(filepath, mode='r') as fp:
         for line in fp:
             if 'Runtime options file for Phantom, written' in line:
                 date, time = line.split()[-2:]
@@ -398,9 +390,7 @@ def _convert_value_type_phantom(value):
     for regex in timedelta_regexes:
         if re.fullmatch(regex, value):
             value = value.split(':')
-            return datetime.timedelta(
-                hours=int(value[0]), minutes=int(value[1])
-            )
+            return datetime.timedelta(hours=int(value[0]), minutes=int(value[1]))
 
     for regex in int_regexes:
         if re.fullmatch(regex, value):
