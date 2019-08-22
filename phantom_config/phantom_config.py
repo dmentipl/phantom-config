@@ -315,7 +315,7 @@ def _parse_phantom_file(filepath):
             if line:
                 line, comment = line.split('!')
                 comments.append(comment.strip())
-                variable, value = line.split('=')
+                variable, value = line.split('=', 1)
                 variables.append(variable.strip())
                 value = value.strip()
                 value = _convert_value_type_phantom(value)
