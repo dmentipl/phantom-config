@@ -22,5 +22,6 @@ setup(
     license='MIT',
     description='Phantom config files: parse, convert, modify, and generate.',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     install_requires=install_requires,
 )
