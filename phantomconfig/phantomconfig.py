@@ -16,15 +16,20 @@ class PhantomConfig:
     Parameters
     ----------
     filename : str or pathlib.Path
-        Name of Phantom config file. E.g. prefix.in or prefix.setup.
+        Name of Phantom config file. Typically of the form prefix.in or
+        prefix.setup.
 
     filetype : str
-        Assumes default Phantom config type, 'phantom'. Alternative is
+        The file type of the config file. The default is a standard
+        Phantom config type, specified by 'phantom'. The alternative is
         'json'.
 
     dictionary : dict
         A dictionary encoding a Phantom config structure like:
             {'variable': [value, comment, block], ...}
+        There is a special key '__header__' whose value should be a list
+        of strings, corresponding to lines in the "header" of a Phantom
+        config file.
     """
 
     def __init__(self, filename=None, filetype=None, dictionary=None):
@@ -71,24 +76,24 @@ class PhantomConfig:
             self._initialize_from_json(filepath)
 
     def _initialize_from_phantom(self, filepath):
-        datetime, header, block_names, conf = _parse_phantom_file(filepath)
-        self._initialize(datetime, header, block_names, conf)
+        date_time, header, block_names, conf = _parse_phantom_file(filepath)
+        self._initialize(date_time, header, block_names, conf)
 
     def _initialize_from_json(self, filepath):
-        datetime, header, block_names, conf = _parse_json_file(filepath)
-        self._initialize(datetime, header, block_names, conf)
+        date_time, header, block_names, conf = _parse_json_file(filepath)
+        self._initialize(date_time, header, block_names, conf)
 
     def _initialize_from_dictionary(self, dictionary):
-        datetime, header, block_names, conf = _parse_dict(dictionary)
-        self._initialize(datetime, header, block_names, conf)
+        date_time, header, block_names, conf = _parse_dict(dictionary)
+        self._initialize(date_time, header, block_names, conf)
 
-    def _initialize(self, datetime, header, block_names, conf):
+    def _initialize(self, date_time, header, block_names, conf):
         """Initialize PhantomConfig."""
 
         variables, values, comments, blocks = conf[0], conf[1], conf[2], conf[3]
 
         self.header = header
-        self.datetime = datetime
+        self.datetime = date_time
         self.config = {
             var: ConfigVariable(var, val, comment, block)
             for var, val, comment, block in zip(variables, values, comments, blocks)
@@ -302,22 +307,30 @@ def _parse_dict(dictionary):
     variables = list()
     values = list()
     comments = list()
+
+    header = None
+    date_time = None
+
     for key, item in dictionary.items():
-        var = key
-        val = item[0]
-        comment = item[1]
-        block = item[2]
-        variables.append(var)
-        values.append(val)
-        comments.append(comment)
-        blocks.append(block)
+        if key == '__header__':
+            header = item
+        elif key == '__date_time__':
+            date_time = item
+        else:
+            var = key
+            val = item[0]
+            comment = item[1]
+            block = item[2]
+            variables.append(var)
+            values.append(val)
+            comments.append(comment)
+            blocks.append(block)
 
     block_names = list(OrderedDict.fromkeys(blocks))
 
-    datetime_ = None
-    header = None
+    date_time = None
 
-    return datetime_, header, block_names, (variables, values, comments, blocks)
+    return date_time, header, block_names, (variables, values, comments, blocks)
 
 
 def _parse_json_file(filepath):
@@ -343,16 +356,14 @@ def _parse_json_file(filepath):
             comments.append(comment)
             blocks.append(key)
 
-    datetime_ = None
+    date_time = None
     header = None
 
-    return datetime_, header, block_names, (variables, values, comments, blocks)
+    return date_time, header, block_names, (variables, values, comments, blocks)
 
 
 def _parse_phantom_file(filepath):
     """Parse Phantom config file."""
-
-    datetime_ = _get_datetime_from_phantom_infile(filepath)
 
     with open(filepath, mode='r') as fp:
         variables = list()
@@ -382,24 +393,42 @@ def _parse_phantom_file(filepath):
                 values.append(value)
                 blocks.append(block_name)
 
-    return datetime_, header, block_names, (variables, values, comments, blocks)
+    date_time = _get_datetime_from_header(header)
+
+    return date_time, header, block_names, (variables, values, comments, blocks)
 
 
-def _get_datetime_from_phantom_infile(filepath):
-    """Get datetime from Phantom timestamp in infile.
+def _get_datetime_from_header(header):
+    """Get datetime from Phantom timestamp in header.
 
     Phantom timestamp is like dd/mm/yyyy hh:mm:s.ms
-    """
-    datetime_ = None
-    with open(filepath, mode='r') as fp:
-        for line in fp:
-            if 'Runtime options file for Phantom, written' in line:
-                date, time = line.split()[-2:]
-                datetime_ = datetime.datetime.strptime(
-                    date + time, '%d/%m/%Y%H:%M:%S.%f'
-                )
 
-    return datetime_
+    Parameters
+    ----------
+    header : list
+        The header as a list of strings.
+
+    Returns
+    -------
+    datetime.datetime
+        The datetime of the config.
+    """
+
+    date_time = None
+    for line in header:
+        if date_time is not None:
+            break
+        matches = re.findall(r'\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2}.\d+', line)
+        if len(matches) == 0:
+            continue
+        elif len(matches) == 1:
+            date_time = datetime.datetime.strptime(
+                matches[0], '%d/%m/%Y %H:%M:%S.%f'
+            )
+        else:
+            raise ValueError('Too many date time values in line')
+
+    return date_time
 
 
 def _convert_json_to_datetime(val):
