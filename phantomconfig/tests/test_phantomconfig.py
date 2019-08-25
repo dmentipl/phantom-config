@@ -47,5 +47,43 @@ class TestReadDict(unittest.TestCase):
         self.assertEqual(conf.datetime, test_data.test_datetime)
 
 
+class TestWritePhantom(unittest.TestCase):
+    """Test writing Phantom config files."""
+
+    def test_write_phantom_config(self):
+
+        tmp_file = pathlib.Path('tmp.in')
+
+        conf = pc.read_config(test_phantom_file)
+        conf.write_phantom(tmp_file)
+
+        conf = pc.read_config(tmp_file)
+
+        self.assertEqual(conf.config, test_data.test_config)
+        self.assertEqual(conf.header, test_data.test_header)
+        self.assertEqual(conf.datetime, test_data.test_datetime)
+
+        tmp_file.unlink()
+
+
+class TestWriteJSON(unittest.TestCase):
+    """Test writing Phantom config files."""
+
+    def test_write_json_config(self):
+
+        tmp_file = pathlib.Path('tmp.in')
+
+        conf = pc.read_config(test_phantom_file)
+        conf.write_json(tmp_file)
+
+        conf = pc.read_json(tmp_file)
+
+        self.assertEqual(conf.config, test_data.test_config)
+        self.assertEqual(conf.header, test_data.test_header)
+        self.assertEqual(conf.datetime, test_data.test_datetime)
+
+        tmp_file.unlink()
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)

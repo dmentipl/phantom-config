@@ -130,7 +130,7 @@ class PhantomConfig:
                 fp,
                 indent=4,
                 sort_keys=False,
-                default=_convert_json_to_datetime,
+                default=_serialize_datetime_for_json,
             )
 
     def write_phantom(self, filename):
@@ -256,32 +256,37 @@ class PhantomConfig:
             lines.append('\n')
 
         for block, block_contents in self._dictionary_in_blocks().items():
-            lines.append('# ' + block + '\n')
-            for var, val, comment in block_contents:
-                if isinstance(val, bool):
-                    val_string = 'T'.rjust(_length) if val else 'F'.rjust(_length)
-                elif isinstance(val, float):
-                    val_string = _phantom_float_format(
-                        val, length=_length, justify='right'
-                    )
-                elif isinstance(val, int):
-                    val_string = f'{val:>{_length}}'
-                elif isinstance(val, str):
-                    val_string = f'{val:>{_length}}'
-                elif isinstance(val, datetime.timedelta):
-                    hhh = int(val.total_seconds() / 3600)
-                    mm = int((val.total_seconds() - 3600 * hhh) / 60)
-                    val_string = f'{hhh:03}:{mm:02}'.rjust(_length)
-                else:
-                    raise ValueError('Cannot determine type')
-                lines.append(f'{var:>20} = ' + val_string + f'   ! {comment}\n')
-            lines.append('\n')
+            if block in ['__header__', '__datetime__']:
+                pass
+            else:
+                lines.append('# ' + block + '\n')
+                for var, val, comment in block_contents:
+                    if isinstance(val, bool):
+                        val_string = 'T'.rjust(_length) if val else 'F'.rjust(_length)
+                    elif isinstance(val, float):
+                        val_string = _phantom_float_format(
+                            val, length=_length, justify='right'
+                        )
+                    elif isinstance(val, int):
+                        val_string = f'{val:>{_length}}'
+                    elif isinstance(val, str):
+                        val_string = f'{val:>{_length}}'
+                    elif isinstance(val, datetime.timedelta):
+                        hhh = int(val.total_seconds() / 3600)
+                        mm = int((val.total_seconds() - 3600 * hhh) / 60)
+                        val_string = f'{hhh:03}:{mm:02}'.rjust(_length)
+                    else:
+                        raise ValueError('Cannot determine type')
+                    lines.append(f'{var:>20} = ' + val_string + f'   ! {comment}\n')
+                lines.append('\n')
 
         return lines[:-1]
 
     def _dictionary_in_blocks(self):
         """Return dictionary of config values with blocks as keys."""
+
         block_dict = dict()
+
         for block in self.blocks:
             block_dict[block] = list()
             names = [conf.name for conf in self.config.values() if conf.block == block]
@@ -293,6 +298,12 @@ class PhantomConfig:
             ]
             for name, value, comment in zip(names, values, comments):
                 block_dict[block].append([name, value, comment])
+
+        if self.header is not None:
+            block_dict['__header__'] = self.header
+        if self.datetime is not None:
+            block_dict['__datetime__'] = self.datetime
+
         return block_dict
 
     def _make_attrs(self):
@@ -350,9 +361,7 @@ def _parse_json_file(filepath):
         if key == '__header__':
             header = item
         elif key == '__datetime__':
-            date_time = datetime.datetime.strptime(
-                item, '%d/%m/%Y %H:%M:%S.%f'
-            )
+            date_time = datetime.datetime.strptime(item, '%d/%m/%Y %H:%M:%S.%f')
         else:
             for var, val, comment in item:
                 if isinstance(val, str):
@@ -437,27 +446,63 @@ def _get_datetime_from_header(header):
         if len(matches) == 0:
             continue
         elif len(matches) == 1:
-            date_time = datetime.datetime.strptime(
-                matches[0], '%d/%m/%Y %H:%M:%S.%f'
-            )
+            date_time = datetime.datetime.strptime(matches[0], '%d/%m/%Y %H:%M:%S.%f')
         else:
             raise ValueError('Too many date time values in line')
 
     return date_time
 
 
-def _convert_json_to_datetime(val):
-    """Convert datetime string from JSON config to datetime.timedelta.
+def _serialize_datetime_for_json(val):
+    """Serialize datetime objects for JSON.
 
     Parameters
     ----------
-    value : str
-        The value as a string.
+    val
+        The value as datetime.datetime or datetime.timedelta.
 
     Returns
     -------
-    value
-        The value as datetime.timedelta
+    str
+        The datetime as a string like "dd/mm/yyyy HH:MM:SS.f", or
+        timdelta as string like "HHH:MM".
+    """
+    if isinstance(val, datetime.datetime):
+        return _convert_datetime_to_str(val)
+    elif isinstance(val, datetime.timedelta):
+        return _convert_timedelta_to_str(val)
+    else:
+        raise ValueError('Cannot serialize object')
+
+
+def _convert_datetime_to_str(val):
+    """Convert datetime.datetime to a string.
+
+    Parameters
+    ----------
+    val
+        The value as datetime.datetime.
+
+    Returns
+    -------
+    str
+        The datetime as a string like "dd/mm/yyyy HH:MM:SS.f".
+    """
+    return datetime.datetime.strftime(val, '%d/%m/%Y %H:%M:%S.%f')
+
+
+def _convert_timedelta_to_str(val):
+    """Convert datetime.timedelta to a string.
+
+    Parameters
+    ----------
+    val
+        The value as datetime.timedelta.
+
+    Returns
+    -------
+    str
+        The timedelta as a string like "HHH:MM".
     """
     hhh = int(val.total_seconds() / 3600)
     mm = int((val.total_seconds() - 3600 * hhh) / 60)
