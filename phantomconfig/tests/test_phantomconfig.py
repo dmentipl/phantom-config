@@ -32,8 +32,8 @@ class TestReadJSON(unittest.TestCase):
 
         conf = pc.read_json(test_json_file)
         self.assertEqual(conf.config, test_data.test_config)
-        # self.assertEqual(conf.header, test_data.test_header)
-        # self.assertEqual(conf.datetime, test_data.test_datetime)
+        self.assertEqual(conf.header, test_data.test_header)
+        self.assertEqual(conf.datetime, test_data.test_datetime)
 
 
 class TestReadDict(unittest.TestCase):

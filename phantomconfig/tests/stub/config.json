@@ -1,4 +1,10 @@
 {
+    "__header__": [
+        "Runtime options file for Phantom, written 01/01/1999 12:00:00.0",
+        "Options not present assume their default values",
+        "This file is updated automatically after a full dump"
+    ],
+    "__datetime__": "01/01/1999 12:00:00.0",
     "job name": [
         [
             "logfile",

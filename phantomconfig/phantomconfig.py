@@ -338,25 +338,41 @@ def _parse_json_file(filepath):
     with open(filepath, mode='r') as fp:
         json_dict = json.load(fp)
 
-    block_names = list(json_dict.keys())
-
     blocks = list()
     variables = list()
     values = list()
     comments = list()
-    for key, item in json_dict.items():
-        for var, val, comment in item:
-            if isinstance(val, str):
-                if re.fullmatch(r'\d\d\d:\d\d', val):
-                    val = val.split(':')
-                    val = datetime.timedelta(hours=int(val[0]), minutes=int(val[1]))
-            variables.append(var)
-            values.append(val)
-            comments.append(comment)
-            blocks.append(key)
 
-    date_time = None
     header = None
+    date_time = None
+
+    for key, item in json_dict.items():
+        if key == '__header__':
+            header = item
+        elif key == '__datetime__':
+            date_time = datetime.datetime.strptime(
+                item, '%d/%m/%Y %H:%M:%S.%f'
+            )
+        else:
+            for var, val, comment in item:
+                if isinstance(val, str):
+                    if re.fullmatch(r'\d\d\d:\d\d', val):
+                        val = val.split(':')
+                        val = datetime.timedelta(hours=int(val[0]), minutes=int(val[1]))
+                variables.append(var)
+                values.append(val)
+                comments.append(comment)
+                blocks.append(key)
+
+    block_names = list(json_dict.keys())
+    try:
+        block_names.remove('__header__')
+    except ValueError:
+        pass
+    try:
+        block_names.remove('__datetime__')
+    except ValueError:
+        pass
 
     return date_time, header, block_names, (variables, values, comments, blocks)
 
