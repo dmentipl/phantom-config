@@ -27,9 +27,10 @@ class PhantomConfig:
     dictionary : dict
         A dictionary encoding a Phantom config structure like:
             {'variable': [value, comment, block], ...}
-        There is a special key '__header__' whose value should be a list
-        of strings, corresponding to lines in the "header" of a Phantom
-        config file.
+        There are two special keys. '__header__' whose value should be a
+        list of strings, corresponding to lines in the "header" of a
+        Phantom config file. And '__datetime__' whose value should be a
+        datetime.datetime object.
     """
 
     def __init__(self, filename=None, filetype=None, dictionary=None):
@@ -314,7 +315,7 @@ def _parse_dict(dictionary):
     for key, item in dictionary.items():
         if key == '__header__':
             header = item
-        elif key == '__date_time__':
+        elif key == '__datetime__':
             date_time = item
         else:
             var = key
@@ -327,8 +328,6 @@ def _parse_dict(dictionary):
             blocks.append(block)
 
     block_names = list(OrderedDict.fromkeys(blocks))
-
-    date_time = None
 
     return date_time, header, block_names, (variables, values, comments, blocks)
 
