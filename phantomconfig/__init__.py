@@ -76,4 +76,4 @@ def read_json(filename):
 
 __all__ = ['read_config', 'read_dict', 'read_json']
 
-__version__ = '0.2.0'
+__version__ = '0.2.1'

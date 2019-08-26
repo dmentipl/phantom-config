@@ -1,10 +1,9 @@
 import datetime
 import json
+import math
 import pathlib
 import re
 from collections import OrderedDict, namedtuple
-
-import numpy as np
 
 ConfigVariable = namedtuple('ConfigVariable', ['name', 'value', 'comment', 'block'])
 
@@ -566,7 +565,7 @@ def _phantom_float_format(val, length=None, justify=None):
         The float as formatted str.
     """
 
-    if np.isclose(abs(val), 0, atol=1e-50):
+    if math.isclose(abs(val), 0, abs_tol=1e-50):
         string = '0.000'
     elif abs(val) < 0.001:
         string = f'{val:.3e}'
