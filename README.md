@@ -12,6 +12,7 @@ phantom-config can read Phantom `.in` and `.setup` files. (They have the same fo
 
 [![Build Status](https://travis-ci.org/dmentipl/phantom-config.svg?branch=master)](https://travis-ci.org/dmentipl/phantom-config)
 [![Coverage Status](https://coveralls.io/repos/github/dmentipl/phantom-config/badge.svg?branch=master)](https://coveralls.io/github/dmentipl/phantom-config?branch=master)
+![PyPI](https://img.shields.io/pypi/v/phantomconfig)
 
 Installation
 ------------
