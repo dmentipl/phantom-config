@@ -1,10 +1,15 @@
 """
-Parse Phantom config files
---------------------------
+Phantom config files: parse, convert, modify, and generate
+----------------------------------------------------------
 
-phantomconfig is designed to read and write the Phantom config file
-format. And to convert to and from JSON. Files usually have names like
-prefix.in or prefix.setup.
+phantomconfig is designed to:
+
+- read and write the Phantom config file format,
+- to modify, add, and remove variables,
+- convert to and from JSON
+- convert to and from a Python dictionary.
+
+See [Phantom](https://phantomsph.bitbucket.io/) for details on Phantom.
 
 Daniel Mentiplay, 2019.
 """
@@ -21,6 +26,11 @@ def read_dict(dictionary):
     dictionary : dict
         A dictionary of the form:
             {'variable': [value, comment, block], ...}
+        There are two special keys,
+            '__header__': a list of strings, corresponding to lines in
+                          the "header" of a Phantom config file,
+            '__datetime__': a datetime.datetime object for the time
+                            stamp of the file.
 
     Returns
     -------
@@ -66,4 +76,4 @@ def read_json(filename):
 
 __all__ = ['read_config', 'read_dict', 'read_json']
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
