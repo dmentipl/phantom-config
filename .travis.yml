@@ -5,7 +5,7 @@ python:
   - "3.7"
 
 install:
-  - pip install coverage coveralls
+  - pip install black coverage coveralls
 
 script:
   - python -m coverage run -m unittest discover
