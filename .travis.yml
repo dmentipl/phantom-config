@@ -9,6 +9,7 @@ install:
 
 script:
   - python -m coverage run -m unittest discover
+  - black --check --skip-string-normalization .
 
 after_success:
   - coveralls
