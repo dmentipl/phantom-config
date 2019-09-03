@@ -4,9 +4,7 @@ import datetime
 
 from phantomconfig.phantomconfig import ConfigVariable
 
-_datetime = datetime.datetime.strptime(
-    '01/01/1999 12:00:00.0', '%d/%m/%Y %H:%M:%S.%f'
-)
+_datetime = datetime.datetime.strptime('01/01/1999 12:00:00.0', '%d/%m/%Y %H:%M:%S.%f')
 
 header = [
     'Runtime options file for Phantom, written 01/01/1999 12:00:00.0',
