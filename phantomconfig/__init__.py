@@ -93,4 +93,4 @@ def read_toml(filename):
 
 __all__ = ['read_config', 'read_dict', 'read_json', 'read_toml']
 
-__version__ = '0.2.1'
+__version__ = '0.3.0'
