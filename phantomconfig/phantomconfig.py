@@ -5,6 +5,8 @@ import pathlib
 import re
 from collections import OrderedDict, namedtuple
 
+import toml
+
 ConfigVariable = namedtuple('ConfigVariable', ['name', 'value', 'comment', 'block'])
 
 
@@ -20,8 +22,8 @@ class PhantomConfig:
 
     filetype : str
         The file type of the config file. The default is a standard
-        Phantom config type, specified by 'phantom'. The alternative is
-        'json'.
+        Phantom config type, specified by 'phantom'. The alternatives are
+        'json' and 'toml'.
 
     dictionary : dict
         A dictionary encoding a Phantom config structure like:
@@ -50,6 +52,8 @@ class PhantomConfig:
                     filetype = 'phantom'
                 elif filetype.lower() == 'json':
                     filetype = 'json'
+                elif filetype.lower() == 'toml':
+                    filetype = 'toml'
                 else:
                     raise ValueError('Cannot determine file type.')
             else:
@@ -74,6 +78,8 @@ class PhantomConfig:
             self._initialize_from_phantom(filepath)
         elif filetype == 'json':
             self._initialize_from_json(filepath)
+        elif filetype == 'toml':
+            self._initialize_from_toml(filepath)
 
     def _initialize_from_phantom(self, filepath):
         date_time, header, block_names, conf = _parse_phantom_file(filepath)
@@ -81,6 +87,10 @@ class PhantomConfig:
 
     def _initialize_from_json(self, filepath):
         date_time, header, block_names, conf = _parse_json_file(filepath)
+        self._initialize(date_time, header, block_names, conf)
+
+    def _initialize_from_toml(self, filepath):
+        date_time, header, block_names, conf = _parse_toml_file(filepath)
         self._initialize(date_time, header, block_names, conf)
 
     def _initialize_from_dictionary(self, dictionary):
@@ -114,6 +124,30 @@ class PhantomConfig:
     @property
     def blocks(self):
         return [self.config[key].block for key in self.config]
+
+    def write_toml(self, filename):
+        """Write config to TOML file.
+
+        NB: writing to TOML does not preserve the comments (TODO).
+
+        Parameters
+        ----------
+        filename : str or pathlib.Path
+            The name of the TOML output file.
+        """
+
+        # TODO: writing to TOML does not preserve the comments.
+
+        d = self.to_dict()
+        d_copy = {**d}
+        for block_key, block_val in d.items():
+            if isinstance(block_val, dict):
+                for key, val in block_val.items():
+                    if isinstance(val, datetime.timedelta):
+                        d_copy[block_key][key] = _convert_timedelta_to_str(val)
+
+        with open(filename, mode='w') as fid:
+            toml.dump(d_copy, fid)
 
     def write_json(self, filename):
         """Write config to JSON file.
@@ -184,6 +218,61 @@ class PhantomConfig:
                 [config.block for config in self.config.values()],
             )
         )
+
+    def to_dict(self):
+        """Convert config to a nested dictionary.
+
+        Returns
+        -------
+        dict
+            The config file as an ordered dictionary, like
+                {'block': {'variable': value, ...}, ...}
+        """
+
+        nested_dict = dict()
+
+        for block in self.blocks:
+            names = [conf.name for conf in self.config.values() if conf.block == block]
+            values = [
+                conf.value for conf in self.config.values() if conf.block == block
+            ]
+            nested_dict[block] = {name: value for name, value in zip(names, values)}
+
+        if self.header is not None:
+            nested_dict['__header__'] = self.header
+        if self.datetime is not None:
+            nested_dict['__datetime__'] = self.datetime
+        return nested_dict
+
+    def to_flat_dict(self, only_values=False):
+        """Convert config to a flat dictionary.
+
+        Parameters
+        ----------
+        only_values : bool, optional (False)
+            If True, keys are names, items are values.
+            If False, keys are names, items are tuples like
+                (val, comment, block).
+
+        Returns
+        -------
+        dict
+            The config file as an ordered dictionary, like
+                {'variable': (value, comment, block)}
+            If only values:
+                {'variable': value}
+        """
+        if only_values:
+            return {[var, val] for var, val in zip(self.variables, self.values)}
+        return {
+            [var, [val, comment, block]]
+            for var, val, comment, block in zip(
+                self.variables,
+                self.values,
+                self.comments,
+                [config.block for config in self.config.values()],
+            )
+        }
 
     def add_variable(self, variable, value, comment=None, block=None):
         """Add a variable to the config.
@@ -342,6 +431,48 @@ def _parse_dict(dictionary):
     return date_time, header, block_names, (variables, values, comments, blocks)
 
 
+def _parse_toml_file(filepath):
+    """Parse TOML config file."""
+
+    toml_dict = toml.load(filepath)
+
+    blocks = list()
+    variables = list()
+    values = list()
+    comments = list()
+
+    header = None
+    date_time = None
+
+    for key, item in toml_dict.items():
+        if key in ['__header__', 'header']:
+            header = item
+        elif key in ['__datetime__', 'datetime']:
+            date_time = item
+        else:
+            for var, val in item.items():
+                if isinstance(val, str):
+                    if re.fullmatch(r'\d\d\d:\d\d', val):
+                        val = val.split(':')
+                        val = datetime.timedelta(hours=int(val[0]), minutes=int(val[1]))
+                variables.append(var)
+                values.append(val)
+                comments.append(None)
+                blocks.append(key)
+
+    block_names = list(toml_dict.keys())
+    try:
+        block_names.remove('__header__')
+    except ValueError:
+        pass
+    try:
+        block_names.remove('__datetime__')
+    except ValueError:
+        pass
+
+    return date_time, header, block_names, (variables, values, comments, blocks)
+
+
 def _parse_json_file(filepath):
     """Parse JSON config file."""
 
@@ -357,9 +488,9 @@ def _parse_json_file(filepath):
     date_time = None
 
     for key, item in json_dict.items():
-        if key == '__header__':
+        if key in ['__header__', 'header']:
             header = item
-        elif key == '__datetime__':
+        elif key in ['__datetime__', 'datetime']:
             date_time = datetime.datetime.strptime(item, '%d/%m/%Y %H:%M:%S.%f')
         else:
             for var, val, comment in item:

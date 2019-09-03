@@ -50,7 +50,7 @@
         ],
         [
             "dtwallmax",
-            "000:00",
+            "010:00",
             "maximum wall time between dumps (hhh:mm, 000:00=ignore)"
         ],
         [

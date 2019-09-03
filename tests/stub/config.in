@@ -13,7 +13,7 @@
                 nout =          -1    ! number of steps between dumps (-ve=ignore)
            nmaxdumps =          -1    ! stop after n full dumps (-ve=ignore)
             twallmax =      000:00    ! maximum wall time (hhh:mm, 000:00=ignore)
-           dtwallmax =      000:00    ! maximum wall time between dumps (hhh:mm, 000:00=ignore)
+           dtwallmax =      010:00    ! maximum wall time between dumps (hhh:mm, 000:00=ignore)
            nfulldump =          10    ! full dump every n dumps
             iverbose =           0    ! verboseness of log (-1=quiet 0=default 1=allsteps 2=debug 5=max)
 

@@ -74,6 +74,23 @@ def read_json(filename):
     return PhantomConfig(filename=filename, filetype='json')
 
 
-__all__ = ['read_config', 'read_dict', 'read_json']
+def read_toml(filename):
+    """
+    Initialize PhantomConfig from a TOML config file.
+
+    Parameters
+    ----------
+    filename : str or pathlib.Path
+        The TOML config file.
+
+    Returns
+    -------
+    PhantomConfig
+        Generated from the file.
+    """
+    return PhantomConfig(filename=filename, filetype='toml')
+
+
+__all__ = ['read_config', 'read_dict', 'read_json', 'read_toml']
 
 __version__ = '0.2.1'

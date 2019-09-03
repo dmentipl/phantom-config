@@ -74,6 +74,13 @@ Check that the configs are equal
 >>> input_file.config == json_file.config
 ```
 
+You can also read and write TOML files.
+
+```python
+>>> input_file.write_toml('prefix-in.toml')
+>>> toml_file = pc.read_toml('prefix-in.toml')
+```
+
 You can add a new variable, remove a variable, and change the value of a variable.
 
 ```python

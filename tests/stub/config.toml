@@ -1,0 +1,54 @@
+__header__ = [ "Runtime options file for Phantom, written 01/01/1999 12:00:00.0", "Options not present assume their default values", "This file is updated automatically after a full dump",]
+__datetime__ = 1999-01-01T12:00:00
+
+["job name"]
+logfile = "test01.log"
+dumpfile = "test_00000"
+
+["options controlling run time and input/output"]
+tmax = 100.0
+dtmax = 1.0
+nmax = -1
+nout = -1
+nmaxdumps = -1
+twallmax = "000:00"
+dtwallmax = "010:00"
+nfulldump = 10
+iverbose = 0
+
+["options controlling accuracy"]
+C_cour = 0.3
+C_force = 0.25
+tolv = 0.01
+hfact = 1.0
+tolh = 0.0001
+restartonshortest = false
+
+["options controlling hydrodynamics, artificial dissipation"]
+alpha = 0.1
+beta = 2.0
+avdecayconst = 0.1
+damp = 0.0
+
+["options controlling equation of state"]
+ieos = 3
+mu = 2.381
+
+["options controlling sink particles"]
+h_soft_sinksink = 0.0
+f_acc = 0.8
+
+["options relating to external forces"]
+iexternalforce = 0
+
+["options controlling physical viscosity"]
+irealvisc = 0
+shearparam = 0.1
+bulkvisc = 0.0
+
+["options controlling dust"]
+idrag = 1
+grainsize = 0.1
+graindens = 3.0
+K_code = 1.0
+icut_backreaction = 0

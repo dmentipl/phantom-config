@@ -4,17 +4,17 @@ import datetime
 
 from phantomconfig.phantomconfig import ConfigVariable
 
-test_datetime = datetime.datetime.strptime(
+_datetime = datetime.datetime.strptime(
     '01/01/1999 12:00:00.0', '%d/%m/%Y %H:%M:%S.%f'
 )
 
-test_header = [
+header = [
     'Runtime options file for Phantom, written 01/01/1999 12:00:00.0',
     'Options not present assume their default values',
     'This file is updated automatically after a full dump',
 ]
 
-test_config = {
+config = {
     'logfile': ConfigVariable(
         'logfile', 'test01.log', 'file to which output is directed', 'job name'
     ),
@@ -56,7 +56,7 @@ test_config = {
     ),
     'dtwallmax': ConfigVariable(
         'dtwallmax',
-        datetime.timedelta(0),
+        datetime.timedelta(hours=10),
         'maximum wall time between dumps (hhh:mm, 000:00=ignore)',
         'options controlling run time and input/output',
     ),
@@ -200,9 +200,120 @@ test_config = {
     ),
 }
 
-test_dict = {
-    '__header__': test_header,
-    '__datetime__': test_datetime,
+variables = [
+    'logfile',
+    'dumpfile',
+    'tmax',
+    'dtmax',
+    'nmax',
+    'nout',
+    'nmaxdumps',
+    'twallmax',
+    'dtwallmax',
+    'nfulldump',
+    'iverbose',
+    'C_cour',
+    'C_force',
+    'tolv',
+    'hfact',
+    'tolh',
+    'restartonshortest',
+    'alpha',
+    'beta',
+    'avdecayconst',
+    'damp',
+    'ieos',
+    'mu',
+    'h_soft_sinksink',
+    'f_acc',
+    'iexternalforce',
+    'irealvisc',
+    'shearparam',
+    'bulkvisc',
+    'idrag',
+    'grainsize',
+    'graindens',
+    'K_code',
+    'icut_backreaction',
+]
+
+values = [
+    'test01.log',
+    'test_00000',
+    100.0,
+    1.0,
+    -1,
+    -1,
+    -1,
+    datetime.timedelta(0),
+    datetime.timedelta(hours=10),
+    10,
+    0,
+    0.3,
+    0.25,
+    0.01,
+    1.0,
+    0.0001,
+    False,
+    0.1,
+    2.0,
+    0.1,
+    0.0,
+    3,
+    2.381,
+    0.0,
+    0.8,
+    0,
+    0,
+    0.1,
+    0.0,
+    1,
+    0.1,
+    3.0,
+    1.0,
+    0,
+]
+
+comments = [
+    'file to which output is directed',
+    'dump file to start from',
+    'end time',
+    'time between dumps',
+    'maximum number of timesteps (0=just get derivs and stop)',
+    'number of steps between dumps (-ve=ignore)',
+    'stop after n full dumps (-ve=ignore)',
+    'maximum wall time (hhh:mm, 000:00=ignore)',
+    'maximum wall time between dumps (hhh:mm, 000:00=ignore)',
+    'full dump every n dumps',
+    'verboseness of log (-1=quiet 0=default 1=allsteps 2=debug 5=max)',
+    'Courant number',
+    'dt_force number',
+    'tolerance on v iterations in timestepping',
+    'h in units of particle spacing [h = hfact(m/rho)^(1/3)]',
+    'tolerance on h-rho iterations',
+    'restart with all particles on shortest timestep',
+    'art. viscosity parameter',
+    'beta viscosity',
+    'decay time constant for viscosity switches',
+    'artificial damping of velocities (if on, v=0 initially)',
+    'eqn of state (1=isoth;2=adiab;3=locally iso;8=barotropic)',
+    'mean molecular weight',
+    'softening length between sink particles',
+    'particles < f_acc*h_acc accreted without checks',
+    '1=star,2=coro,3=bina,4=prdr,5=toru,6=toys,7=exte,8=spir,9=Lens,10=neut,11=Eins,',
+    'physical viscosity type (0=none,1=const,2=Shakura/Sunyaev)',
+    'magnitude of shear viscosity (irealvisc=1) or alpha_SS (irealvisc=2)',
+    'magnitude of bulk viscosity',
+    'gas/dust drag (0=off,1=Epstein/Stokes,2=const K,3=const ts)',
+    'Grain size in cm',
+    'Intrinsic grain density in g/cm^3',
+    'drag constant when constant drag is used',
+    'cut the drag on the gas phase (0=no, 1=yes)',
+]
+
+_dict = {
+    '__header__': header,
+    '__datetime__': _datetime,
     'logfile': ['test01.log', 'file to which output is directed', 'job name'],
     'dumpfile': ['test_00000', 'dump file to start from', 'job name'],
     'tmax': [100.0, 'end time', 'options controlling run time and input/output'],
@@ -232,7 +343,7 @@ test_dict = {
         'options controlling run time and input/output',
     ],
     'dtwallmax': [
-        datetime.timedelta(0),
+        datetime.timedelta(hours=10),
         'maximum wall time between dumps (hhh:mm, 000:00=ignore)',
         'options controlling run time and input/output',
     ],
