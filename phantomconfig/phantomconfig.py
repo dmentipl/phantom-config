@@ -4,6 +4,8 @@ import math
 import pathlib
 import re
 from collections import OrderedDict, namedtuple
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import toml
 
@@ -34,13 +36,18 @@ class PhantomConfig:
         datetime.datetime object.
     """
 
-    def __init__(self, filename=None, filetype=None, dictionary=None):
+    def __init__(
+        self,
+        filename: Optional[Union[str, Path]] = None,
+        filetype: Optional[str] = None,
+        dictionary: Optional[Dict] = None,
+    ) -> None:
 
-        filepath = None
+        filepath: Path = None
 
-        self.config = None
-        self.datetime = None
-        self.header = None
+        self.config: Dict[str, ConfigVariable] = None
+        self.datetime: datetime.datetime = None
+        self.header: List[str] = None
 
         if filename is not None:
 
@@ -81,23 +88,29 @@ class PhantomConfig:
         elif filetype == 'toml':
             self._initialize_from_toml(filepath)
 
-    def _initialize_from_phantom(self, filepath):
+    def _initialize_from_phantom(self, filepath: Path) -> None:
         date_time, header, block_names, conf = _parse_phantom_file(filepath)
         self._initialize(date_time, header, block_names, conf)
 
-    def _initialize_from_json(self, filepath):
+    def _initialize_from_json(self, filepath: Path) -> None:
         date_time, header, block_names, conf = _parse_json_file(filepath)
         self._initialize(date_time, header, block_names, conf)
 
-    def _initialize_from_toml(self, filepath):
+    def _initialize_from_toml(self, filepath: Path) -> None:
         date_time, header, block_names, conf = _parse_toml_file(filepath)
         self._initialize(date_time, header, block_names, conf)
 
-    def _initialize_from_dictionary(self, dictionary):
+    def _initialize_from_dictionary(self, dictionary: Dict) -> None:
         date_time, header, block_names, conf = _parse_dict(dictionary)
         self._initialize(date_time, header, block_names, conf)
 
-    def _initialize(self, date_time, header, block_names, conf):
+    def _initialize(
+        self,
+        date_time: datetime.datetime,
+        header: List[str],
+        block_names: List[str],
+        conf: Tuple,
+    ) -> None:
         """Initialize PhantomConfig."""
 
         variables, values, comments, blocks = conf[0], conf[1], conf[2], conf[3]
@@ -110,22 +123,22 @@ class PhantomConfig:
         }
 
     @property
-    def variables(self):
+    def variables(self) -> List[str]:
         return [self.config[key].name for key in self.config]
 
     @property
-    def values(self):
+    def values(self) -> List:
         return [self.config[key].value for key in self.config]
 
     @property
-    def comments(self):
+    def comments(self) -> List[str]:
         return [self.config[key].comment for key in self.config]
 
     @property
-    def blocks(self):
+    def blocks(self) -> List[str]:
         return [self.config[key].block for key in self.config]
 
-    def write_toml(self, filename):
+    def write_toml(self, filename: Union[str, Path]) -> None:
         """Write config to TOML file.
 
         NB: writing to TOML does not preserve the comments (TODO).
@@ -149,7 +162,7 @@ class PhantomConfig:
         with open(filename, mode='w') as fid:
             toml.dump(d_copy, fid)
 
-    def write_json(self, filename):
+    def write_json(self, filename: Union[str, Path]) -> None:
         """Write config to JSON file.
 
         Parameters
@@ -166,7 +179,7 @@ class PhantomConfig:
                 default=_serialize_datetime_for_json,
             )
 
-    def write_phantom(self, filename):
+    def write_phantom(self, filename: Union[str, Path]) -> None:
         """Write config to Phantom config file.
 
         Parameters
@@ -178,7 +191,7 @@ class PhantomConfig:
             for line in self._to_phantom_lines():
                 fp.write(line)
 
-    def summary(self):
+    def summary(self) -> None:
         """Print summary of config."""
         name_width = 25
         print()
@@ -187,7 +200,7 @@ class PhantomConfig:
         for entry in self.config.values():
             print(f'{entry.name.rjust(name_width)}   {entry.value}')
 
-    def to_ordered_dict(self, only_values=False):
+    def to_ordered_dict(self, only_values: bool = False) -> OrderedDict:
         """Convert config to ordered dictionary.
 
         Parameters
@@ -207,10 +220,10 @@ class PhantomConfig:
         """
         if only_values:
             return OrderedDict(
-                [var, val] for var, val in zip(self.variables, self.values)
+                (var, val) for var, val in zip(self.variables, self.values)
             )
         return OrderedDict(
-            [var, [val, comment, block]]
+            (var, [val, comment, block])
             for var, val, comment, block in zip(
                 self.variables,
                 self.values,
@@ -219,7 +232,7 @@ class PhantomConfig:
             )
         )
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]:
         """Convert config to a nested dictionary.
 
         Returns
@@ -229,7 +242,7 @@ class PhantomConfig:
                 {'block': {'variable': value, ...}, ...}
         """
 
-        nested_dict = dict()
+        nested_dict: Dict[str, Any] = dict()
 
         for block in self.blocks:
             names = [conf.name for conf in self.config.values() if conf.block == block]
@@ -244,7 +257,7 @@ class PhantomConfig:
             nested_dict['__datetime__'] = self.datetime
         return nested_dict
 
-    def to_flat_dict(self, only_values=False):
+    def to_flat_dict(self, only_values: bool = False) -> Dict:
         """Convert config to a flat dictionary.
 
         Parameters
@@ -263,9 +276,9 @@ class PhantomConfig:
                 {'variable': value}
         """
         if only_values:
-            return {[var, val] for var, val in zip(self.variables, self.values)}
+            return {var: val for var, val in zip(self.variables, self.values)}
         return {
-            [var, [val, comment, block]]
+            var: [val, comment, block]
             for var, val, comment, block in zip(
                 self.variables,
                 self.values,
@@ -274,7 +287,13 @@ class PhantomConfig:
             )
         }
 
-    def add_variable(self, variable, value, comment=None, block=None):
+    def add_variable(
+        self,
+        variable: str,
+        value: Any,
+        comment: Optional[str] = None,
+        block: Optional[str] = None,
+    ) -> None:
         """Add a variable to the config.
 
         Parameters
@@ -296,7 +315,7 @@ class PhantomConfig:
 
         self.config[variable] = ConfigVariable(variable, value, comment, block)
 
-    def remove_variable(self, variable):
+    def remove_variable(self, variable: str) -> None:
         """Remove a variable from the config.
 
         Parameters
@@ -306,7 +325,7 @@ class PhantomConfig:
         """
         self.config.pop(variable)
 
-    def change_value(self, variable, value):
+    def change_value(self, variable: str, value: Any) -> None:
         """Change a value on a variable.
 
         Parameters
@@ -327,7 +346,7 @@ class PhantomConfig:
 
         self.config[variable] = ConfigVariable(tmp[0], value, tmp[2], tmp[3])
 
-    def _to_phantom_lines(self):
+    def _to_phantom_lines(self) -> List[str]:
         """Convert config to a list of lines in Phantom style.
 
         Returns
@@ -340,7 +359,8 @@ class PhantomConfig:
 
         lines = list()
         if self.header is not None:
-            [lines.append('# ' + header_line + '\n') for header_line in self.header]
+            for header_line in self.header:
+                lines.append('# ' + header_line + '\n')
             lines.append('\n')
 
         for block, block_contents in self._dictionary_in_blocks().items():
@@ -370,10 +390,10 @@ class PhantomConfig:
 
         return lines[:-1]
 
-    def _dictionary_in_blocks(self):
+    def _dictionary_in_blocks(self) -> Dict:
         """Return dictionary of config values with blocks as keys."""
 
-        block_dict = dict()
+        block_dict: Dict = dict()
 
         for block in self.blocks:
             block_dict[block] = list()
@@ -394,13 +414,13 @@ class PhantomConfig:
 
         return block_dict
 
-    def _make_attrs(self):
+    def _make_attrs(self) -> None:
         """Make each config variable an attribute."""
         for entry in self.config.values():
             setattr(self, entry.name, entry)
 
 
-def _parse_dict(dictionary):
+def _parse_dict(dictionary: Dict) -> Any:
     """Parse dictionary {'variable': [value, comment, block], ...}."""
 
     blocks = list()
@@ -431,7 +451,7 @@ def _parse_dict(dictionary):
     return date_time, header, block_names, (variables, values, comments, blocks)
 
 
-def _parse_toml_file(filepath):
+def _parse_toml_file(filepath: Union[str, Path]) -> Any:
     """Parse TOML config file."""
 
     toml_dict = toml.load(filepath)
@@ -457,7 +477,7 @@ def _parse_toml_file(filepath):
                         val = datetime.timedelta(hours=int(val[0]), minutes=int(val[1]))
                 variables.append(var)
                 values.append(val)
-                comments.append(None)
+                comments.append('')
                 blocks.append(key)
 
     block_names = list(toml_dict.keys())
@@ -473,7 +493,7 @@ def _parse_toml_file(filepath):
     return date_time, header, block_names, (variables, values, comments, blocks)
 
 
-def _parse_json_file(filepath):
+def _parse_json_file(filepath: Union[str, Path]) -> Any:
     """Parse JSON config file."""
 
     with open(filepath, mode='r') as fp:
@@ -516,7 +536,7 @@ def _parse_json_file(filepath):
     return date_time, header, block_names, (variables, values, comments, blocks)
 
 
-def _parse_phantom_file(filepath):
+def _parse_phantom_file(filepath: Union[str, Path]) -> Any:
     """Parse Phantom config file."""
 
     with open(filepath, mode='r') as fp:
@@ -552,7 +572,7 @@ def _parse_phantom_file(filepath):
     return date_time, header, block_names, (variables, values, comments, blocks)
 
 
-def _get_datetime_from_header(header):
+def _get_datetime_from_header(header: List[str]) -> datetime.datetime:
     """Get datetime from Phantom timestamp in header.
 
     Phantom timestamp is like dd/mm/yyyy hh:mm:s.ms
@@ -583,7 +603,9 @@ def _get_datetime_from_header(header):
     return date_time
 
 
-def _serialize_datetime_for_json(val):
+def _serialize_datetime_for_json(
+    val: Union[datetime.datetime, datetime.timedelta]
+) -> str:
     """Serialize datetime objects for JSON.
 
     Parameters
@@ -605,7 +627,7 @@ def _serialize_datetime_for_json(val):
         raise ValueError('Cannot serialize object')
 
 
-def _convert_datetime_to_str(val):
+def _convert_datetime_to_str(val: datetime.datetime) -> str:
     """Convert datetime.datetime to a string.
 
     Parameters
@@ -621,7 +643,7 @@ def _convert_datetime_to_str(val):
     return datetime.datetime.strftime(val, '%d/%m/%Y %H:%M:%S.%f')
 
 
-def _convert_timedelta_to_str(val):
+def _convert_timedelta_to_str(val: datetime.timedelta) -> str:
     """Convert datetime.timedelta to a string.
 
     Parameters
@@ -639,7 +661,7 @@ def _convert_timedelta_to_str(val):
     return f'{hhh:03}:{mm:02}'
 
 
-def _convert_value_type_phantom(value):
+def _convert_value_type_phantom(value: str) -> Any:
     """Convert string from Phantom config to appropriate type.
 
     Parameters
@@ -668,8 +690,8 @@ def _convert_value_type_phantom(value):
 
     for regex in timedelta_regexes:
         if re.fullmatch(regex, value):
-            value = value.split(':')
-            return datetime.timedelta(hours=int(value[0]), minutes=int(value[1]))
+            hours, minutes = value.split(':')
+            return datetime.timedelta(hours=int(hours), minutes=int(minutes))
 
     for regex in int_regexes:
         if re.fullmatch(regex, value):
@@ -678,7 +700,9 @@ def _convert_value_type_phantom(value):
     return value
 
 
-def _phantom_float_format(val, length=None, justify=None):
+def _phantom_float_format(
+    val: float, length: Optional[int] = None, justify: Optional[str] = None
+):
     """Float to Phantom style float string.
 
     Parameters

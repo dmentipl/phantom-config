@@ -14,10 +14,13 @@ See [Phantom](https://phantomsph.bitbucket.io/) for details on Phantom.
 Daniel Mentiplay, 2019.
 """
 
+from pathlib import Path
+from typing import Dict, Union
+
 from .phantomconfig import PhantomConfig
 
 
-def read_dict(dictionary):
+def read_dict(dictionary: Dict) -> PhantomConfig:
     """
     Initialize PhantomConfig from a dictionary.
 
@@ -40,7 +43,7 @@ def read_dict(dictionary):
     return PhantomConfig(dictionary=dictionary)
 
 
-def read_config(filename):
+def read_config(filename: Union[str, Path]) -> PhantomConfig:
     """
     Initialize PhantomConfig from a Phantom config file.
 
@@ -57,7 +60,7 @@ def read_config(filename):
     return PhantomConfig(filename=filename, filetype='phantom')
 
 
-def read_json(filename):
+def read_json(filename: Union[str, Path]) -> PhantomConfig:
     """
     Initialize PhantomConfig from a JSON config file.
 
@@ -74,7 +77,7 @@ def read_json(filename):
     return PhantomConfig(filename=filename, filetype='json')
 
 
-def read_toml(filename):
+def read_toml(filename: Union[str, Path]) -> PhantomConfig:
     """
     Initialize PhantomConfig from a TOML config file.
 
