@@ -24,16 +24,21 @@ class PhantomConfig:
 
     filetype : str
         The file type of the config file. The default is a standard
-        Phantom config type, specified by 'phantom'. The alternatives are
-        'json' and 'toml'.
+        Phantom config type, specified by 'phantom'. The alternatives
+        are 'json' and 'toml'.
 
     dictionary : dict
-        A dictionary encoding a Phantom config structure like:
+        A dictionary encoding a Phantom config structure. Can be flat
+        like
             {'variable': [value, comment, block], ...}
+        or nested like
+            {'block': 'variable': (value, comment), ...}.
         There are two special keys. '__header__' whose value should be a
         list of strings, corresponding to lines in the "header" of a
         Phantom config file. And '__datetime__' whose value should be a
         datetime.datetime object.
+    dictionary_type : str
+        The type of dictionary passed: either 'nested' or 'flat'.
     """
 
     def __init__(
@@ -41,6 +46,7 @@ class PhantomConfig:
         filename: Optional[Union[str, Path]] = None,
         filetype: Optional[str] = None,
         dictionary: Optional[Dict] = None,
+        dictionary_type: str = None,
     ) -> None:
 
         filepath: Path = None
@@ -78,31 +84,37 @@ class PhantomConfig:
         else:
             if dictionary is None:
                 raise ValueError('Need a file name or dictionary.')
+            if dictionary_type is None:
+                dictionary_type = 'flat'
+            if dictionary_type not in ('nested', 'flat'):
+                raise ValueError('Cannot determine dictionary type')
 
         if filetype is None:
-            self._initialize_from_dictionary(dictionary)
+            if dictionary_type == 'nested':
+                try:
+                    date_time, header, block_names, conf = _parse_dict_nested(
+                        dictionary
+                    )
+                except KeyError:
+                    raise ValueError('Cannot read dictionary; is the dictionary flat?')
+                date_time, header, block_names, conf = _parse_dict_nested(dictionary)
+            elif dictionary_type == 'flat':
+                try:
+                    date_time, header, block_names, conf = _parse_dict_flat(dictionary)
+                except KeyError:
+                    raise ValueError(
+                        'Cannot read dictionary; is the dictionary nested?'
+                    )
+            self._initialize(date_time, header, block_names, conf)
         elif filetype == 'phantom':
-            self._initialize_from_phantom(filepath)
+            date_time, header, block_names, conf = _parse_phantom_file(filepath)
+            self._initialize(date_time, header, block_names, conf)
         elif filetype == 'json':
-            self._initialize_from_json(filepath)
+            date_time, header, block_names, conf = _parse_json_file(filepath)
+            self._initialize(date_time, header, block_names, conf)
         elif filetype == 'toml':
-            self._initialize_from_toml(filepath)
-
-    def _initialize_from_phantom(self, filepath: Path) -> None:
-        date_time, header, block_names, conf = _parse_phantom_file(filepath)
-        self._initialize(date_time, header, block_names, conf)
-
-    def _initialize_from_json(self, filepath: Path) -> None:
-        date_time, header, block_names, conf = _parse_json_file(filepath)
-        self._initialize(date_time, header, block_names, conf)
-
-    def _initialize_from_toml(self, filepath: Path) -> None:
-        date_time, header, block_names, conf = _parse_toml_file(filepath)
-        self._initialize(date_time, header, block_names, conf)
-
-    def _initialize_from_dictionary(self, dictionary: Dict) -> None:
-        date_time, header, block_names, conf = _parse_dict(dictionary)
-        self._initialize(date_time, header, block_names, conf)
+            date_time, header, block_names, conf = _parse_toml_file(filepath)
+            self._initialize(date_time, header, block_names, conf)
 
     def _initialize(
         self,
@@ -420,8 +432,41 @@ class PhantomConfig:
             setattr(self, entry.name, entry)
 
 
-def _parse_dict(dictionary: Dict) -> Any:
-    """Parse dictionary {'variable': [value, comment, block], ...}."""
+def _parse_dict_nested(dictionary: Dict) -> Any:
+    """Parse nested dictionary like
+        {'block': 'variable': (value, comment), ...}.
+    """
+
+    blocks = list()
+    variables = list()
+    values = list()
+    comments = list()
+
+    header = None
+    date_time = None
+
+    for key, item in dictionary.items():
+        if key == '__header__':
+            header = item
+        elif key == '__datetime__':
+            date_time = item
+        else:
+            sub_dict = item
+            for sub_key, val in sub_dict.items():
+                variables.append(sub_key)
+                values.append(val[0])
+                comments.append(val[1])
+                blocks.append(key)
+
+    block_names = list(OrderedDict.fromkeys(blocks))
+
+    return date_time, header, block_names, (variables, values, comments, blocks)
+
+
+def _parse_dict_flat(dictionary: Dict) -> Any:
+    """Parse flat dictionary like
+        {'variable': [value, comment, block], ...}.
+    """
 
     blocks = list()
     variables = list()

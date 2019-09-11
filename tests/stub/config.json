@@ -132,7 +132,7 @@
     ],
     "options controlling sink particles": [
         [
-            "h_soft_sinksink",
+            "h_soft_sink",
             0.0,
             "softening length between sink particles"
         ],

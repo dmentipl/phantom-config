@@ -12,7 +12,8 @@ from .stub import test_data
 test_phantom_file = pathlib.Path(__file__).parent / 'stub' / 'config.in'
 test_json_file = pathlib.Path(__file__).parent / 'stub' / 'config.json'
 test_toml_file = pathlib.Path(__file__).parent / 'stub' / 'config.toml'
-test_dict = test_data._dict
+test_dict_flat = test_data.dict_flat
+test_dict_nested = test_data.dict_nested
 
 
 class TestReadPhantom(unittest.TestCase):
@@ -49,12 +50,22 @@ class TestReadTOML(unittest.TestCase):
         self.assertEqual(conf.datetime, test_data._datetime)
 
 
-class TestReadDict(unittest.TestCase):
-    """Test reading Python dictionaries."""
+class TestReadDictFlat(unittest.TestCase):
+    """Test reading flat Python dictionaries."""
 
     def test_read_dict(self):
 
-        conf = pc.read_dict(test_dict)
+        conf = pc.read_dict(test_dict_flat, dtype='flat')
+        self.assertEqual(conf.config, test_data.config)
+        self.assertEqual(conf.header, test_data.header)
+        self.assertEqual(conf.datetime, test_data._datetime)
+
+
+class TestReadDictNested(unittest.TestCase):
+    """Test reading nested Python dictionaries."""
+
+    def test_read_dict(self):
+        conf = pc.read_dict(test_dict_nested, dtype='nested')
         self.assertEqual(conf.config, test_data.config)
         self.assertEqual(conf.header, test_data.header)
         self.assertEqual(conf.datetime, test_data._datetime)

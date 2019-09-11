@@ -36,7 +36,7 @@
                   mu =       2.381    ! mean molecular weight
 
 # options controlling sink particles
-     h_soft_sinksink =       0.000    ! softening length between sink particles
+         h_soft_sink =       0.000    ! softening length between sink particles
                f_acc =       0.800    ! particles < f_acc*h_acc accreted without checks
 
 # options relating to external forces

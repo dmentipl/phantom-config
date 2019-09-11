@@ -35,7 +35,7 @@ ieos = 3
 mu = 2.381
 
 ["options controlling sink particles"]
-h_soft_sinksink = 0.0
+h_soft_sink = 0.0
 f_acc = 0.8
 
 ["options relating to external forces"]

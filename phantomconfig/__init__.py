@@ -20,7 +20,7 @@ from typing import Dict, Union
 from .phantomconfig import PhantomConfig
 
 
-def read_dict(dictionary: Dict) -> PhantomConfig:
+def read_dict(dictionary: Dict, dtype: str = None) -> PhantomConfig:
     """
     Initialize PhantomConfig from a dictionary.
 
@@ -34,13 +34,18 @@ def read_dict(dictionary: Dict) -> PhantomConfig:
                           the "header" of a Phantom config file,
             '__datetime__': a datetime.datetime object for the time
                             stamp of the file.
+    dtype : str
+        The dictionary type: either 'nested' or 'flat'.
 
     Returns
     -------
     PhantomConfig
         Generated from the dictionary.
     """
-    return PhantomConfig(dictionary=dictionary)
+
+    if dtype is None:
+        dtype = 'flat'
+    return PhantomConfig(dictionary=dictionary, dictionary_type=dtype)
 
 
 def read_config(filename: Union[str, Path]) -> PhantomConfig:
