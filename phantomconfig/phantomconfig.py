@@ -1,13 +1,22 @@
+from __future__ import annotations
+
 import datetime
 import json
 import math
 import pathlib
-import re
 from collections import OrderedDict, namedtuple
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import toml
+
+from .parsers import (
+    parse_dict_flat,
+    parse_dict_nested,
+    parse_json_file,
+    parse_phantom_file,
+    parse_toml_file,
+)
 
 ConfigVariable = namedtuple('ConfigVariable', ['name', 'value', 'comment', 'block'])
 
@@ -92,28 +101,25 @@ class PhantomConfig:
         if filetype is None:
             if dictionary_type == 'nested':
                 try:
-                    date_time, header, block_names, conf = _parse_dict_nested(
-                        dictionary
-                    )
+                    date_time, header, block_names, conf = parse_dict_nested(dictionary)
                 except KeyError:
                     raise ValueError('Cannot read dictionary; is the dictionary flat?')
-                date_time, header, block_names, conf = _parse_dict_nested(dictionary)
             elif dictionary_type == 'flat':
                 try:
-                    date_time, header, block_names, conf = _parse_dict_flat(dictionary)
+                    date_time, header, block_names, conf = parse_dict_flat(dictionary)
                 except KeyError:
                     raise ValueError(
                         'Cannot read dictionary; is the dictionary nested?'
                     )
             self._initialize(date_time, header, block_names, conf)
         elif filetype == 'phantom':
-            date_time, header, block_names, conf = _parse_phantom_file(filepath)
+            date_time, header, block_names, conf = parse_phantom_file(filepath)
             self._initialize(date_time, header, block_names, conf)
         elif filetype == 'json':
-            date_time, header, block_names, conf = _parse_json_file(filepath)
+            date_time, header, block_names, conf = parse_json_file(filepath)
             self._initialize(date_time, header, block_names, conf)
         elif filetype == 'toml':
-            date_time, header, block_names, conf = _parse_toml_file(filepath)
+            date_time, header, block_names, conf = parse_toml_file(filepath)
             self._initialize(date_time, header, block_names, conf)
 
     def _initialize(
@@ -150,10 +156,9 @@ class PhantomConfig:
     def blocks(self) -> List[str]:
         return [self.config[key].block for key in self.config]
 
-    def write_toml(self, filename: Union[str, Path]) -> None:
-        """Write config to TOML file.
-
-        NB: writing to TOML does not preserve the comments (TODO).
+    def write_toml(self, filename: Union[str, Path]) -> PhantomConfig:
+        """
+        Write config to TOML file.
 
         Parameters
         ----------
@@ -163,7 +168,7 @@ class PhantomConfig:
 
         # TODO: writing to TOML does not preserve the comments.
 
-        d = self.to_dict()
+        d = self.to_dict(only_values=True)
         d_copy = {**d}
         for block_key, block_val in d.items():
             if isinstance(block_val, dict):
@@ -174,7 +179,9 @@ class PhantomConfig:
         with open(filename, mode='w') as fid:
             toml.dump(d_copy, fid)
 
-    def write_json(self, filename: Union[str, Path]) -> None:
+        return self
+
+    def write_json(self, filename: Union[str, Path]) -> PhantomConfig:
         """Write config to JSON file.
 
         Parameters
@@ -191,7 +198,9 @@ class PhantomConfig:
                 default=_serialize_datetime_for_json,
             )
 
-    def write_phantom(self, filename: Union[str, Path]) -> None:
+        return self
+
+    def write_phantom(self, filename: Union[str, Path]) -> PhantomConfig:
         """Write config to Phantom config file.
 
         Parameters
@@ -202,6 +211,8 @@ class PhantomConfig:
         with open(filename, mode='w') as fp:
             for line in self._to_phantom_lines():
                 fp.write(line)
+
+        return self
 
     def summary(self) -> None:
         """Print summary of config."""
@@ -244,14 +255,55 @@ class PhantomConfig:
             )
         )
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert config to a nested dictionary.
+    def to_dict(
+        self, flattened: bool = False, only_values: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Convert config to a dictionary.
+
+        Parameters
+        ----------
+        flattened : bool, optional (False)
+            Whether to return a nested (by block) or flattened
+            dictionary.
+        only_values : bool, optional (False)
+            If True, (possibly nested) items are values only.
+            If False, (possibly nested) items are tuples like
+                (val, comment, block).
 
         Returns
         -------
         dict
-            The config file as an ordered dictionary, like
-                {'block': {'variable': value, ...}, ...}
+            Depending on options, the config file as a dictionary, like
+                {'block': 'variable': (value, comment), ...}.
+                {'block': 'variable': value, ...}.
+                {'variable': (value, comment, block), ...}
+                {'variable': value, ...}
+        """
+
+        if flattened:
+            return self._to_dict_flat(only_values=only_values)
+        else:
+            return self._to_dict_nested(only_values=only_values)
+
+    def _to_dict_nested(self, only_values: bool = False) -> Dict[str, Any]:
+        """
+        Convert config to a nested dictionary.
+
+        Parameters
+        ----------
+        only_values : bool, optional (False)
+            If True, keys are names, items are values.
+            If False, keys are names, items are tuples like
+                (val, comment, block).
+
+        Returns
+        -------
+        dict
+            The config file as a dictionary, like
+                {'block': 'variable': (value, comment), ...}.
+            or, if only_values is True, like
+                {'block': 'variable': value, ...}.
         """
 
         nested_dict: Dict[str, Any] = dict()
@@ -261,7 +313,16 @@ class PhantomConfig:
             values = [
                 conf.value for conf in self.config.values() if conf.block == block
             ]
-            nested_dict[block] = {name: value for name, value in zip(names, values)}
+            comments = [
+                conf.comment for conf in self.config.values() if conf.block == block
+            ]
+            if only_values:
+                nested_dict[block] = {name: value for name, value in zip(names, values)}
+            else:
+                nested_dict[block] = {
+                    name: (value, comment)
+                    for name, value, comment in zip(names, values, comments)
+                }
 
         if self.header is not None:
             nested_dict['__header__'] = self.header
@@ -269,8 +330,9 @@ class PhantomConfig:
             nested_dict['__datetime__'] = self.datetime
         return nested_dict
 
-    def to_flat_dict(self, only_values: bool = False) -> Dict:
-        """Convert config to a flat dictionary.
+    def _to_dict_flat(self, only_values: bool = False) -> Dict:
+        """
+        Convert config to a flat dictionary.
 
         Parameters
         ----------
@@ -283,9 +345,9 @@ class PhantomConfig:
         -------
         dict
             The config file as an ordered dictionary, like
-                {'variable': (value, comment, block)}
+                {'variable': (value, comment, block), ...}
             If only values:
-                {'variable': value}
+                {'variable': value, ...}
         """
         if only_values:
             return {var: val for var, val in zip(self.variables, self.values)}
@@ -305,7 +367,7 @@ class PhantomConfig:
         value: Any,
         comment: Optional[str] = None,
         block: Optional[str] = None,
-    ) -> None:
+    ) -> PhantomConfig:
         """Add a variable to the config.
 
         Parameters
@@ -327,7 +389,9 @@ class PhantomConfig:
 
         self.config[variable] = ConfigVariable(variable, value, comment, block)
 
-    def remove_variable(self, variable: str) -> None:
+        return self
+
+    def remove_variable(self, variable: str) -> PhantomConfig:
         """Remove a variable from the config.
 
         Parameters
@@ -337,7 +401,9 @@ class PhantomConfig:
         """
         self.config.pop(variable)
 
-    def change_value(self, variable: str, value: Any) -> None:
+        return self
+
+    def change_value(self, variable: str, value: Any) -> PhantomConfig:
         """Change a value on a variable.
 
         Parameters
@@ -357,6 +423,8 @@ class PhantomConfig:
             raise ValueError('Value and variable are not compatible')
 
         self.config[variable] = ConfigVariable(tmp[0], value, tmp[2], tmp[3])
+
+        return self
 
     def _to_phantom_lines(self) -> List[str]:
         """Convert config to a list of lines in Phantom style.
@@ -432,222 +500,6 @@ class PhantomConfig:
             setattr(self, entry.name, entry)
 
 
-def _parse_dict_nested(dictionary: Dict) -> Any:
-    """Parse nested dictionary like
-        {'block': 'variable': (value, comment), ...}.
-    """
-
-    blocks = list()
-    variables = list()
-    values = list()
-    comments = list()
-
-    header = None
-    date_time = None
-
-    for key, item in dictionary.items():
-        if key == '__header__':
-            header = item
-        elif key == '__datetime__':
-            date_time = item
-        else:
-            sub_dict = item
-            for sub_key, val in sub_dict.items():
-                variables.append(sub_key)
-                values.append(val[0])
-                comments.append(val[1])
-                blocks.append(key)
-
-    block_names = list(OrderedDict.fromkeys(blocks))
-
-    return date_time, header, block_names, (variables, values, comments, blocks)
-
-
-def _parse_dict_flat(dictionary: Dict) -> Any:
-    """Parse flat dictionary like
-        {'variable': [value, comment, block], ...}.
-    """
-
-    blocks = list()
-    variables = list()
-    values = list()
-    comments = list()
-
-    header = None
-    date_time = None
-
-    for key, item in dictionary.items():
-        if key == '__header__':
-            header = item
-        elif key == '__datetime__':
-            date_time = item
-        else:
-            var = key
-            val = item[0]
-            comment = item[1]
-            block = item[2]
-            variables.append(var)
-            values.append(val)
-            comments.append(comment)
-            blocks.append(block)
-
-    block_names = list(OrderedDict.fromkeys(blocks))
-
-    return date_time, header, block_names, (variables, values, comments, blocks)
-
-
-def _parse_toml_file(filepath: Union[str, Path]) -> Any:
-    """Parse TOML config file."""
-
-    toml_dict = toml.load(filepath)
-
-    blocks = list()
-    variables = list()
-    values = list()
-    comments = list()
-
-    header = None
-    date_time = None
-
-    for key, item in toml_dict.items():
-        if key in ['__header__', 'header']:
-            header = item
-        elif key in ['__datetime__', 'datetime']:
-            date_time = item
-        else:
-            for var, val in item.items():
-                if isinstance(val, str):
-                    if re.fullmatch(r'\d\d\d:\d\d', val):
-                        val = val.split(':')
-                        val = datetime.timedelta(hours=int(val[0]), minutes=int(val[1]))
-                variables.append(var)
-                values.append(val)
-                comments.append('')
-                blocks.append(key)
-
-    block_names = list(toml_dict.keys())
-    try:
-        block_names.remove('__header__')
-    except ValueError:
-        pass
-    try:
-        block_names.remove('__datetime__')
-    except ValueError:
-        pass
-
-    return date_time, header, block_names, (variables, values, comments, blocks)
-
-
-def _parse_json_file(filepath: Union[str, Path]) -> Any:
-    """Parse JSON config file."""
-
-    with open(filepath, mode='r') as fp:
-        json_dict = json.load(fp)
-
-    blocks = list()
-    variables = list()
-    values = list()
-    comments = list()
-
-    header = None
-    date_time = None
-
-    for key, item in json_dict.items():
-        if key in ['__header__', 'header']:
-            header = item
-        elif key in ['__datetime__', 'datetime']:
-            date_time = datetime.datetime.strptime(item, '%d/%m/%Y %H:%M:%S.%f')
-        else:
-            for var, val, comment in item:
-                if isinstance(val, str):
-                    if re.fullmatch(r'\d\d\d:\d\d', val):
-                        val = val.split(':')
-                        val = datetime.timedelta(hours=int(val[0]), minutes=int(val[1]))
-                variables.append(var)
-                values.append(val)
-                comments.append(comment)
-                blocks.append(key)
-
-    block_names = list(json_dict.keys())
-    try:
-        block_names.remove('__header__')
-    except ValueError:
-        pass
-    try:
-        block_names.remove('__datetime__')
-    except ValueError:
-        pass
-
-    return date_time, header, block_names, (variables, values, comments, blocks)
-
-
-def _parse_phantom_file(filepath: Union[str, Path]) -> Any:
-    """Parse Phantom config file."""
-
-    with open(filepath, mode='r') as fp:
-        variables = list()
-        values = list()
-        comments = list()
-        header = list()
-        blocks = list()
-        block_names = list()
-        _read_in_header = False
-        for line in fp:
-            if line.startswith('#'):
-                if not _read_in_header:
-                    header.append(line.strip().split('# ')[1])
-                else:
-                    block_name = line.strip().split('# ')[1]
-                    block_names.append(block_name)
-            if not _read_in_header and line == '\n':
-                _read_in_header = True
-            line = line.split('#', 1)[0].strip()
-            if line:
-                line, comment = line.split('!')
-                comments.append(comment.strip())
-                variable, value = line.split('=', 1)
-                variables.append(variable.strip())
-                value = value.strip()
-                value = _convert_value_type_phantom(value)
-                values.append(value)
-                blocks.append(block_name)
-
-    date_time = _get_datetime_from_header(header)
-
-    return date_time, header, block_names, (variables, values, comments, blocks)
-
-
-def _get_datetime_from_header(header: List[str]) -> datetime.datetime:
-    """Get datetime from Phantom timestamp in header.
-
-    Phantom timestamp is like dd/mm/yyyy hh:mm:s.ms
-
-    Parameters
-    ----------
-    header : list
-        The header as a list of strings.
-
-    Returns
-    -------
-    datetime.datetime
-        The datetime of the config.
-    """
-
-    date_time = None
-    for line in header:
-        if date_time is not None:
-            break
-        matches = re.findall(r'\d{2}/\d{2}/\d{4} \d{2}:\d{2}:\d{2}.\d+', line)
-        if len(matches) == 0:
-            continue
-        elif len(matches) == 1:
-            date_time = datetime.datetime.strptime(matches[0], '%d/%m/%Y %H:%M:%S.%f')
-        else:
-            raise ValueError('Too many date time values in line')
-
-    return date_time
-
-
 def _serialize_datetime_for_json(
     val: Union[datetime.datetime, datetime.timedelta]
 ) -> str:
@@ -704,45 +556,6 @@ def _convert_timedelta_to_str(val: datetime.timedelta) -> str:
     hhh = int(val.total_seconds() / 3600)
     mm = int((val.total_seconds() - 3600 * hhh) / 60)
     return f'{hhh:03}:{mm:02}'
-
-
-def _convert_value_type_phantom(value: str) -> Any:
-    """Convert string from Phantom config to appropriate type.
-
-    Parameters
-    ----------
-    value : str
-        The value as a string.
-
-    Returns
-    -------
-    value
-        The value as appropriate type.
-    """
-
-    float_regexes = [r'\d*\.\d*[Ee][-+]\d*', r'-*\d*\.\d*']
-    timedelta_regexes = [r'\d\d\d:\d\d']
-    int_regexes = [r'-*\d+']
-
-    if value == 'T':
-        return True
-    if value == 'F':
-        return False
-
-    for regex in float_regexes:
-        if re.fullmatch(regex, value):
-            return float(value)
-
-    for regex in timedelta_regexes:
-        if re.fullmatch(regex, value):
-            hours, minutes = value.split(':')
-            return datetime.timedelta(hours=int(hours), minutes=int(minutes))
-
-    for regex in int_regexes:
-        if re.fullmatch(regex, value):
-            return int(value)
-
-    return value
 
 
 def _phantom_float_format(
