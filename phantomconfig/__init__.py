@@ -35,7 +35,8 @@ def read_dict(dictionary: Dict, dtype: str = None) -> PhantomConfig:
             '__datetime__': a datetime.datetime object for the time
                             stamp of the file.
     dtype : str
-        The dictionary type: either 'nested' or 'flat'.
+        The dictionary type: either 'nested' or 'flat'. The default is
+        'nested'.
 
     Returns
     -------
@@ -44,7 +45,7 @@ def read_dict(dictionary: Dict, dtype: str = None) -> PhantomConfig:
     """
 
     if dtype is None:
-        dtype = 'flat'
+        dtype = 'nested'
     return PhantomConfig(dictionary=dictionary, dictionary_type=dtype)
 
 

@@ -1,13 +1,13 @@
 Phantom config
 ==============
 
-> [Phantom](https://bitbucket.org/danielprice/phantom) config files: parse, convert, modify, and  generate.
+> [Phantom](https://bitbucket.org/danielprice/phantom) config files: parse, convert, modify, and generate.
 
 phantom-config can read Phantom `.in` and `.setup` files. (They have the same format.) You can, for example:
 
-- modify config values,
-- add new variables,
-- write the config as a JSON file,
+- modify config values or comment strings,
+- add new variables or delete old ones,
+- write the config to a JSON or TOML file,
 - generate a config file from a dictionary.
 
 [![Build Status](https://travis-ci.org/dmentipl/phantom-config.svg?branch=master)](https://travis-ci.org/dmentipl/phantom-config)
@@ -113,11 +113,12 @@ Examples
 You can create a Phantom `.setup` file from a Python dictionary. First create the dictionary
 
 ```python
->>> setup = {
-... 'cs': [cs, 'sound speed', 'gas properties'],
-... 'npart': [npart, 'number of particles in x direction', 'gas properties'],
-... 'rhozero': [rhozero, 'initial density', 'gas properties'],
-... 'ilattice': [ilattice, 'lattice type', 'gas properties'],
+>>> setup = {}
+>>> setup['gas properties'] = {
+... 'cs': (cs, 'sound speed'),
+... 'npart': (npart, 'number of particles in x direction'),
+... 'rhozero': (rhozero, 'initial density'),
+... 'ilattice': (ilattice, 'lattice type'),
 ... }
 ```
 
@@ -125,7 +126,10 @@ Then you can read the dictionary with `phantomconfig`, and write to a Phantom `.
 
 ```python
 >>> setup_config = pc.read_dict(setup)
->>> setup_config.header = ['input file for some particular setup routine']
+>>> setup_config.header = [
+...     'input file for some particular setup routine',
+...     'short description of what it does']
+... ]
 >>> setup_config.write_phantom('filename.setup')
 ```
 
@@ -133,6 +137,7 @@ This writes a file like
 
 ```
 # input file for some particular setup routine
+# short description of what it does
 
 # gas properties
                   cs =        1.000   ! sound speed
