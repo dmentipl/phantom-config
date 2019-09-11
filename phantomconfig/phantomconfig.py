@@ -4,7 +4,7 @@ import datetime
 import json
 import math
 import pathlib
-from collections import OrderedDict, namedtuple
+from collections import namedtuple
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
@@ -222,38 +222,6 @@ class PhantomConfig:
         print(18 * ' ' + '--------   -----')
         for entry in self.config.values():
             print(f'{entry.name.rjust(name_width)}   {entry.value}')
-
-    def to_ordered_dict(self, only_values: bool = False) -> OrderedDict:
-        """Convert config to ordered dictionary.
-
-        Parameters
-        ----------
-        only_values : bool, optional (False)
-            If True, keys are names, items are values.
-            If False, keys are names, items are tuples like
-                (val, comment, block).
-
-        Returns
-        -------
-        OrderedDict
-            The config file as an ordered dictionary, like
-                {'variable': (value, comment, block)}
-            If only values:
-                {'variable': value}
-        """
-        if only_values:
-            return OrderedDict(
-                (var, val) for var, val in zip(self.variables, self.values)
-            )
-        return OrderedDict(
-            (var, [val, comment, block])
-            for var, val, comment, block in zip(
-                self.variables,
-                self.values,
-                self.comments,
-                [config.block for config in self.config.values()],
-            )
-        )
 
     def to_dict(
         self, flattened: bool = False, only_values: bool = False
