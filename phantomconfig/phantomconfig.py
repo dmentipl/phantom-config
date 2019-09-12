@@ -58,7 +58,8 @@ class PhantomConfig:
         dictionary_type: str = None,
     ) -> None:
 
-        filepath: Path = None
+        self.name: str = None
+        self.filepath: Path = None
 
         self.config: Dict[str, ConfigVariable] = None
         self.datetime: datetime.datetime = None
@@ -67,7 +68,6 @@ class PhantomConfig:
         if filename is not None:
 
             if filetype is None:
-                print('Assuming Phantom config file.')
                 filetype = 'phantom'
             elif isinstance(filetype, str):
                 if filetype.lower() == 'phantom':
@@ -90,7 +90,11 @@ class PhantomConfig:
             if not filepath.exists():
                 raise FileNotFoundError(f'Cannot find config file: {filename}')
 
+            self.name = filename
+            self.filepath = filepath
+
         else:
+            self.name = 'dict'
             if dictionary is None:
                 raise ValueError('Need a file name or dictionary.')
             if dictionary_type is None:
@@ -214,14 +218,20 @@ class PhantomConfig:
 
         return self
 
-    def summary(self) -> None:
-        """Print summary of config."""
-        name_width = 25
-        print()
-        print(18 * ' ' + 'variable   value')
-        print(18 * ' ' + '--------   -----')
-        for entry in self.config.values():
-            print(f'{entry.name.rjust(name_width)}   {entry.value}')
+    def summary(self, block: str = None) -> None:
+        """
+        Print summary of config.
+
+        Optional Parameters
+        -------------------
+        block : str
+            Only print the lines of the specified block.
+        """
+        for line in self._to_phantom_lines(block=block):
+            print(line.strip('\n'))
+
+    def __repr__(self) -> str:
+        return f"PhantomConfig('{self.name}')"
 
     def to_dict(
         self, flattened: bool = False, only_values: bool = False
@@ -394,8 +404,14 @@ class PhantomConfig:
 
         return self
 
-    def _to_phantom_lines(self) -> List[str]:
-        """Convert config to a list of lines in Phantom style.
+    def _to_phantom_lines(self, block: str = None) -> List[str]:
+        """
+        Convert config to a list of lines in Phantom style.
+
+        Optional Parameters
+        -------------------
+        block : str
+            Only return the lines of the specified block.
 
         Returns
         -------
@@ -405,17 +421,25 @@ class PhantomConfig:
 
         _length = 12
 
-        lines = list()
-        if self.header is not None:
-            for header_line in self.header:
-                lines.append('# ' + header_line + '\n')
-            lines.append('\n')
+        only_block = None
+        if block is not None:
+            only_block = block
 
-        for block, block_contents in self._dictionary_in_blocks().items():
-            if block in ['__header__', '__datetime__']:
+        lines = list()
+
+        if only_block is None:
+            if self.header is not None:
+                for header_line in self.header:
+                    lines.append('# ' + header_line + '\n')
+                lines.append('\n')
+
+        for block_name, block_contents in self._dictionary_in_blocks().items():
+            if only_block is not None and block_name != only_block:
+                continue
+            if block_name in ['__header__', '__datetime__']:
                 pass
             else:
-                lines.append('# ' + block + '\n')
+                lines.append('# ' + block_name + '\n')
                 for var, val, comment in block_contents:
                     if isinstance(val, bool):
                         val_string = 'T'.rjust(_length) if val else 'F'.rjust(_length)
