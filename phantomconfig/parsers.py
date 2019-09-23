@@ -5,7 +5,7 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
-import toml
+import tomlkit
 
 
 def parse_dict_nested(dictionary: Dict[str, Dict[str, tuple]]) -> Any:
@@ -115,7 +115,8 @@ def parse_toml_file(filepath: Union[str, Path]) -> Any:
     (variables, values, comments, blocks) : Tuple[str, Any, str, str]
     """
 
-    toml_dict = toml.load(filepath)
+    with open(filepath, 'r') as fp:
+        toml_dict = tomlkit.loads(fp.read())
 
     blocks = list()
     variables = list()
@@ -138,8 +139,26 @@ def parse_toml_file(filepath: Union[str, Path]) -> Any:
                         val = datetime.timedelta(hours=int(val[0]), minutes=int(val[1]))
                 variables.append(var)
                 values.append(val)
-                comments.append('')
                 blocks.append(key)
+
+    variable_comment = dict()
+    for key in toml_dict.keys():
+        lines = toml_dict[key].as_string().split('\n')
+        while '' in lines:
+            lines.remove('')
+        comment = list()
+        for line in lines:
+            if line.startswith('#'):
+                comment.append(line[2:])
+            else:
+                variable_comment[line.split('=')[0].strip()] = '\n'.join(comment)
+                comment = list()
+
+    for var in variables:
+        if var in variable_comment:
+            comments.append(variable_comment[var])
+        else:
+            comments.append('')
 
     block_names = list(toml_dict.keys())
     try:
@@ -150,6 +169,16 @@ def parse_toml_file(filepath: Union[str, Path]) -> Any:
         block_names.remove('__datetime__')
     except ValueError:
         pass
+
+    header = list()
+    lines = toml_dict.as_string().split('\n')
+    for line in lines:
+        if line.startswith('#'):
+            header.append(line.strip().split('# ')[1])
+        if line == '':
+            break
+
+    date_time = _get_datetime_from_header(header)
 
     return date_time, header, block_names, (variables, values, comments, blocks)
 

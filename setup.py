@@ -21,6 +21,6 @@ setup(
     description='Phantom config files: parse, convert, modify, and generate.',
     long_description=long_description,
     long_description_content_type='text/markdown',
-    install_requires=['toml'],
+    install_requires=['tomlkit'],
     python_requires='>=3.7',
 )

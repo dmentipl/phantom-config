@@ -19,7 +19,7 @@ Installation
 
 Install phantom-config with pip
 
-```
+```bash
 pip install phantomconfig
 ```
 
@@ -28,16 +28,16 @@ Usage
 
 ### Basic usage
 
-Import phantom-config as `pc`.
+Import phantom-config.
 
 ```python
->>> import phantomconfig as pc
+>>> import phantomconfig
 ```
 
 To read in a Phantom config file
 
 ```python
->>> input_file = pc.read_config('prefix.in')
+>>> input_file = phantomconfig.read_config('prefix.in')
 ```
 
 Print a summary
@@ -61,11 +61,17 @@ The keys of this dictionary correspond to the variable name, and values are a `C
 >>> dtmax.block
 ```
 
+You can just get the value if you want.
+
+```python
+input_file.get_value('dtmax')
+```
+
 If you like, you can write the Phantom config as a JSON file, and you can read the JSON file.
 
 ```python
 >>> input_file.write_json('prefix-in.json')
->>> json_file = pc.read_json('prefix-in.json')
+>>> json_file = phantomconfig.read_json('prefix-in.json')
 ```
 
 Check that the configs are equal
@@ -78,7 +84,7 @@ You can also read and write TOML files.
 
 ```python
 >>> input_file.write_toml('prefix-in.toml')
->>> toml_file = pc.read_toml('prefix-in.toml')
+>>> toml_file = phantomconfig.read_toml('prefix-in.toml')
 ```
 
 You can add a new variable, remove a variable, and change the value of a variable.
@@ -125,7 +131,7 @@ You can create a Phantom `.setup` file from a Python dictionary. First create th
 Then you can read the dictionary with `phantomconfig`, and write to a Phantom `.setup` file
 
 ```python
->>> setup_config = pc.read_dict(setup)
+>>> setup_config = phantomconfig.read_dict(setup)
 >>> setup_config.header = [
 ...     'input file for some particular setup routine',
 ...     'short description of what it does']
@@ -153,10 +159,9 @@ Say you want to write multiple configs, each with a different parameter value. F
 1. reads the template file
 2. loops over a list of `alpha` values, writing a new `.in` file for each value in the list
 
-
 ```python
 alphas = [0.1, 0.2, 0.3]
-infile = pc.read_config('template.in')
+infile = phantomconfig.read_config('template.in')
 
 for alpha in alphas:
     infile.change_value('alpha', alpha)

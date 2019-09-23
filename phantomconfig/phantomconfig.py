@@ -8,7 +8,7 @@ from collections import namedtuple
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import toml
+import tomlkit
 
 from .parsers import (
     parse_dict_flat,
@@ -172,16 +172,29 @@ class PhantomConfig:
 
         # TODO: writing to TOML does not preserve the comments.
 
-        d = self.to_dict(only_values=True)
-        d_copy = {**d}
-        for block_key, block_val in d.items():
-            if isinstance(block_val, dict):
-                for key, val in block_val.items():
-                    if isinstance(val, datetime.timedelta):
-                        d_copy[block_key][key] = _convert_timedelta_to_str(val)
+        document = tomlkit.document()
 
-        with open(filename, mode='w') as fid:
-            toml.dump(d_copy, fid)
+        if self.header is not None:
+            for line in self.header:
+                document.add(tomlkit.comment(line))
+            document.add(tomlkit.nl())
+
+        d = self.to_dict()
+        for block_key, block_val in d.items():
+            block = tomlkit.table()
+            if isinstance(block_val, dict):
+                for name, item in block_val.items():
+                    value, comment = item
+                    if isinstance(value, datetime.timedelta):
+                        value = _convert_timedelta_to_str(value)
+                    block.add(tomlkit.nl())
+                    if comment is not None:
+                        block.add(tomlkit.comment(comment))
+                    block.add(name, value)
+                document.add(block_key, block)
+
+        with open(filename, 'w') as fp:
+            fp.write(tomlkit.dumps(document))
 
         return self
 
@@ -381,6 +394,20 @@ class PhantomConfig:
 
         return self
 
+    def get_value(self, variable: str) -> Any:
+        """Get the value of a variable.
+
+        Parameters
+        ----------
+        variable : str
+            The name of the variable.
+
+        Returns
+        -------
+        The value of the variable.
+        """
+        return self.config[variable].value
+
     def change_value(self, variable: str, value: Any) -> PhantomConfig:
         """Change a value on a variable.
 
@@ -490,6 +517,9 @@ class PhantomConfig:
         """Make each config variable an attribute."""
         for entry in self.config.values():
             setattr(self, entry.name, entry)
+
+    def __eq__(self, other):
+        return self.config == other.config
 
 
 def _serialize_datetime_for_json(
