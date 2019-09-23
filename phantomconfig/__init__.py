@@ -102,4 +102,4 @@ def read_toml(filename: Union[str, Path]) -> PhantomConfig:
 
 __all__ = ['read_config', 'read_dict', 'read_json', 'read_toml']
 
-__version__ = '0.3.1'
+__version__ = '0.3.2'
