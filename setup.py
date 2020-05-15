@@ -1,3 +1,5 @@
+"""Phantom-config setup.py."""
+
 import io
 import pathlib
 import re

@@ -1,9 +1,6 @@
-"""
-Testing phantomconfig.
-"""
+"""Testing phantomconfig."""
 
 import pathlib
-import unittest
 
 import phantomconfig as pc
 
@@ -16,142 +13,114 @@ test_dict_flat = test_data.dict_flat
 test_dict_nested = test_data.dict_nested
 
 
-class TestReadPhantom(unittest.TestCase):
+def test_read_phantom_config():
     """Test reading Phantom config files."""
-
-    def test_read_phantom_config(self):
-
-        conf = pc.read_config(test_phantom_file)
-        self.assertEqual(conf.config, test_data.config)
-        self.assertEqual(conf.header, test_data.header)
-        self.assertEqual(conf.datetime, test_data._datetime)
+    conf = pc.read_config(test_phantom_file)
+    assert conf.config == test_data.config
+    assert conf.header == test_data.header
+    assert conf.datetime == test_data._datetime
 
 
-class TestReadJSON(unittest.TestCase):
+def test_read_json_config():
     """Test reading JSON config files."""
-
-    def test_read_json_config(self):
-
-        conf = pc.read_json(test_json_file)
-        self.assertEqual(conf.config, test_data.config)
-        self.assertEqual(conf.header, test_data.header)
-        self.assertEqual(conf.datetime, test_data._datetime)
+    conf = pc.read_json(test_json_file)
+    assert conf.config == test_data.config
+    assert conf.header == test_data.header
+    assert conf.datetime == test_data._datetime
 
 
-class TestReadTOML(unittest.TestCase):
+def test_read_toml_config():
     """Test reading TOML config files."""
-
-    def test_read_toml_config(self):
-
-        conf = pc.read_toml(test_toml_file)
-        self.assertEqual(conf.variables, test_data.variables)
-        self.assertEqual(conf.values, test_data.values)
-        self.assertEqual(conf.header, test_data.header)
-        self.assertEqual(conf.datetime, test_data._datetime)
+    conf = pc.read_toml(test_toml_file)
+    assert conf.variables == test_data.variables
+    assert conf.values == test_data.values
+    assert conf.header == test_data.header
+    assert conf.datetime == test_data._datetime
 
 
-class TestReadDictFlat(unittest.TestCase):
+def test_read_dict_flat():
     """Test reading flat Python dictionaries."""
-
-    def test_read_dict(self):
-
-        conf = pc.read_dict(test_dict_flat, dtype='flat')
-        self.assertEqual(conf.config, test_data.config)
-        self.assertEqual(conf.header, test_data.header)
-        self.assertEqual(conf.datetime, test_data._datetime)
+    conf = pc.read_dict(test_dict_flat, dtype='flat')
+    assert conf.config == test_data.config
+    assert conf.header == test_data.header
+    assert conf.datetime == test_data._datetime
 
 
-class TestReadDictNested(unittest.TestCase):
+def test_read_dict_nested():
     """Test reading nested Python dictionaries."""
-
-    def test_read_dict(self):
-        conf = pc.read_dict(test_dict_nested, dtype='nested')
-        self.assertEqual(conf.config, test_data.config)
-        self.assertEqual(conf.header, test_data.header)
-        self.assertEqual(conf.datetime, test_data._datetime)
+    conf = pc.read_dict(test_dict_nested, dtype='nested')
+    assert conf.config == test_data.config
+    assert conf.header == test_data.header
+    assert conf.datetime == test_data._datetime
 
 
-class TestWritePhantom(unittest.TestCase):
+def test_write_phantom_config():
     """Test writing Phantom config files."""
+    tmp_file = pathlib.Path('tmp.in')
 
-    def test_write_phantom_config(self):
+    conf = pc.read_config(test_phantom_file)
+    conf.write_phantom(tmp_file)
 
-        tmp_file = pathlib.Path('tmp.in')
+    conf = pc.read_config(tmp_file)
 
-        conf = pc.read_config(test_phantom_file)
-        conf.write_phantom(tmp_file)
+    assert conf.config == test_data.config
+    assert conf.header == test_data.header
+    assert conf.datetime == test_data._datetime
 
-        conf = pc.read_config(tmp_file)
-
-        self.assertEqual(conf.config, test_data.config)
-        self.assertEqual(conf.header, test_data.header)
-        self.assertEqual(conf.datetime, test_data._datetime)
-
-        tmp_file.unlink()
+    tmp_file.unlink()
 
 
-class TestWriteJSON(unittest.TestCase):
+def test_write_json_config():
     """Test writing JSON config files."""
+    tmp_file = pathlib.Path('tmp.json')
 
-    def test_write_json_config(self):
+    conf = pc.read_config(test_phantom_file)
+    conf.write_json(tmp_file)
 
-        tmp_file = pathlib.Path('tmp.json')
+    conf = pc.read_json(tmp_file)
 
-        conf = pc.read_config(test_phantom_file)
-        conf.write_json(tmp_file)
+    assert conf.config == test_data.config
+    assert conf.header == test_data.header
+    assert conf.datetime == test_data._datetime
 
-        conf = pc.read_json(tmp_file)
-
-        self.assertEqual(conf.config, test_data.config)
-        self.assertEqual(conf.header, test_data.header)
-        self.assertEqual(conf.datetime, test_data._datetime)
-
-        tmp_file.unlink()
+    tmp_file.unlink()
 
 
-class TestWriteTOML(unittest.TestCase):
+def test_write_toml_config():
     """Test writing TOML config files."""
+    tmp_file = pathlib.Path('tmp.toml')
 
-    def test_write_toml_config(self):
+    conf = pc.read_config(test_phantom_file)
+    conf.write_toml(tmp_file)
 
-        tmp_file = pathlib.Path('tmp.toml')
+    conf = pc.read_toml(tmp_file)
 
-        conf = pc.read_config(test_phantom_file)
-        conf.write_toml(tmp_file)
+    assert conf.variables == test_data.variables
+    assert conf.values == test_data.values
+    assert conf.header == test_data.header
+    assert conf.datetime == test_data._datetime
 
-        conf = pc.read_toml(tmp_file)
-
-        self.assertEqual(conf.variables, test_data.variables)
-        self.assertEqual(conf.values, test_data.values)
-        self.assertEqual(conf.header, test_data.header)
-        self.assertEqual(conf.datetime, test_data._datetime)
-
-        tmp_file.unlink()
+    tmp_file.unlink()
 
 
-class TestModify(unittest.TestCase):
+def test_add_value():
     """Testing adding, removing, modifying values."""
-
-    def test_add_value(self):
-
-        conf = pc.read_config(test_phantom_file)
-        conf.add_variable('new_variable', 999)
-        conf.add_variable('new_variable', 999, comment='No comment', block='New block')
-        self.assertEqual(conf.config['new_variable'].value, 999)
-
-    def test_remove_variable(self):
-
-        conf = pc.read_config(test_phantom_file)
-        conf.remove_variable('dtmax')
-        self.assertFalse('dtmax' in conf.variables)
-
-    def test_change_variable(self):
-
-        conf = pc.read_config(test_phantom_file)
-        hfact_prev = conf.config['hfact'].value
-        conf.change_value('hfact', 1.2)
-        self.assertNotEqual(conf.config['hfact'].value, hfact_prev)
+    conf = pc.read_config(test_phantom_file)
+    conf.add_variable('new_variable', 999)
+    conf.add_variable('new_variable', 999, comment='No comment', block='New block')
+    assert conf.config['new_variable'].value == 999
 
 
-if __name__ == '__main__':
-    unittest.main(verbosity=2)
+def test_remove_variable():
+    """Test removing a variable."""
+    conf = pc.read_config(test_phantom_file)
+    conf.remove_variable('dtmax')
+    assert 'dtmax' not in conf.variables
+
+
+def test_change_variable():
+    """Test changing a variable."""
+    conf = pc.read_config(test_phantom_file)
+    hfact_prev = conf.config['hfact'].value
+    conf.change_value('hfact', 1.2)
+    assert conf.config['hfact'].value != hfact_prev
