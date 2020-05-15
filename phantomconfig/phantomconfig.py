@@ -1,3 +1,5 @@
+"""Phantom config."""
+
 from __future__ import annotations
 
 import datetime
@@ -22,21 +24,18 @@ ConfigVariable = namedtuple('ConfigVariable', ['name', 'value', 'comment', 'bloc
 
 
 class PhantomConfig:
-    """
-    Phantom config file.
+    """Phantom config file.
 
     Parameters
     ----------
-    filename : str or pathlib.Path
+    filename
         Name of Phantom config file. Typically of the form prefix.in or
         prefix.setup.
-
-    filetype : str
+    filetype
         The file type of the config file. The default is a standard
         Phantom config type, specified by 'phantom'. The alternatives
         are 'json' and 'toml'.
-
-    dictionary : dict
+    dictionary
         A dictionary encoding a Phantom config structure. Can be flat
         like
             {'variable': [value, comment, block], ...}
@@ -46,24 +45,24 @@ class PhantomConfig:
         list of strings, corresponding to lines in the "header" of a
         Phantom config file. And '__datetime__' whose value should be a
         datetime.datetime object.
-    dictionary_type : str
+    dictionary_type
         The type of dictionary passed: either 'nested' or 'flat'.
     """
 
     def __init__(
         self,
-        filename: Optional[Union[str, Path]] = None,
-        filetype: Optional[str] = None,
-        dictionary: Optional[Dict] = None,
+        filename: Union[str, Path] = None,
+        filetype: str = None,
+        dictionary: Dict = None,
         dictionary_type: str = None,
     ) -> None:
 
-        self.name: str = None
-        self.filepath: Path = None
+        self.name: str
+        self.filepath: Path
 
-        self.config: Dict[str, ConfigVariable] = None
-        self.datetime: datetime.datetime = None
-        self.header: List[str] = None
+        self.config: Dict[str, ConfigVariable]
+        self.datetime: Optional[datetime.datetime] = None
+        self.header: Optional[List[str]] = None
 
         if filename is not None:
 
@@ -103,6 +102,7 @@ class PhantomConfig:
                 raise ValueError('Cannot determine dictionary type')
 
         if filetype is None:
+            assert isinstance(dictionary, Dict)
             if dictionary_type == 'nested':
                 try:
                     date_time, header, block_names, conf = parse_dict_nested(dictionary)
@@ -134,7 +134,6 @@ class PhantomConfig:
         conf: Tuple,
     ) -> None:
         """Initialize PhantomConfig."""
-
         variables, values, comments, blocks = conf[0], conf[1], conf[2], conf[3]
 
         self.header = header
@@ -146,30 +145,32 @@ class PhantomConfig:
 
     @property
     def variables(self) -> List[str]:
+        """List of variables."""
         return [self.config[key].name for key in self.config]
 
     @property
     def values(self) -> List:
+        """List of values."""
         return [self.config[key].value for key in self.config]
 
     @property
     def comments(self) -> List[str]:
+        """List of comments."""
         return [self.config[key].comment for key in self.config]
 
     @property
     def blocks(self) -> List[str]:
+        """List of blocks."""
         return [self.config[key].block for key in self.config]
 
     def write_toml(self, filename: Union[str, Path]) -> PhantomConfig:
-        """
-        Write config to TOML file.
+        """Write config to TOML file.
 
         Parameters
         ----------
-        filename : str or pathlib.Path
+        filename
             The name of the TOML output file.
         """
-
         # TODO: writing to TOML does not preserve the comments.
 
         document = tomlkit.document()
@@ -203,7 +204,7 @@ class PhantomConfig:
 
         Parameters
         ----------
-        filename : str or pathlib.Path
+        filename
             The name of the JSON output file.
         """
         with open(filename, mode='w') as fp:
@@ -222,7 +223,7 @@ class PhantomConfig:
 
         Parameters
         ----------
-        filename : str or pathlib.Path
+        filename
             The name of the JSON output file.
         """
         with open(filename, mode='w') as fp:
@@ -232,32 +233,31 @@ class PhantomConfig:
         return self
 
     def summary(self, block: str = None) -> None:
-        """
-        Print summary of config.
+        """Print summary of config.
 
         Optional Parameters
         -------------------
-        block : str
+        block
             Only print the lines of the specified block.
         """
         for line in self._to_phantom_lines(block=block):
             print(line.strip('\n'))
 
     def __repr__(self) -> str:
+        """Repr method."""
         return f"PhantomConfig('{self.name}')"
 
     def to_dict(
         self, flattened: bool = False, only_values: bool = False
     ) -> Dict[str, Any]:
-        """
-        Convert config to a dictionary.
+        """Convert config to a dictionary.
 
         Parameters
         ----------
-        flattened : bool, optional (False)
+        flattened
             Whether to return a nested (by block) or flattened
             dictionary.
-        only_values : bool, optional (False)
+        only_values
             If True, (possibly nested) items are values only.
             If False, (possibly nested) items are tuples like
                 (val, comment, block).
@@ -271,19 +271,17 @@ class PhantomConfig:
                 {'variable': (value, comment, block), ...}
                 {'variable': value, ...}
         """
-
         if flattened:
             return self._to_dict_flat(only_values=only_values)
         else:
             return self._to_dict_nested(only_values=only_values)
 
     def _to_dict_nested(self, only_values: bool = False) -> Dict[str, Any]:
-        """
-        Convert config to a nested dictionary.
+        """Convert config to a nested dictionary.
 
         Parameters
         ----------
-        only_values : bool, optional (False)
+        only_values
             If True, keys are names, items are values.
             If False, keys are names, items are tuples like
                 (val, comment, block).
@@ -296,7 +294,6 @@ class PhantomConfig:
             or, if only_values is True, like
                 {'block': 'variable': value, ...}.
         """
-
         nested_dict: Dict[str, Any] = dict()
 
         for block in self.blocks:
@@ -322,12 +319,11 @@ class PhantomConfig:
         return nested_dict
 
     def _to_dict_flat(self, only_values: bool = False) -> Dict:
-        """
-        Convert config to a flat dictionary.
+        """Convert config to a flat dictionary.
 
         Parameters
         ----------
-        only_values : bool, optional (False)
+        only_values
             If True, keys are names, items are values.
             If False, keys are names, items are tuples like
                 (val, comment, block).
@@ -353,26 +349,21 @@ class PhantomConfig:
         }
 
     def add_variable(
-        self,
-        variable: str,
-        value: Any,
-        comment: Optional[str] = None,
-        block: Optional[str] = None,
+        self, variable: str, value: Any, comment: str = None, block: str = None,
     ) -> PhantomConfig:
         """Add a variable to the config.
 
         Parameters
         ----------
-        variable : str
+        variable
             The name of the variable.
         value
             The value of the variable.
-        comment : str
+        comment
             The comment string describing the variable.
-        block : str
+        block
             The block to which the variable is associated.
         """
-
         if comment is None:
             comment = 'No description'
         if block is None:
@@ -387,7 +378,7 @@ class PhantomConfig:
 
         Parameters
         ----------
-        variable : str
+        variable
             The variable to remove.
         """
         self.config.pop(variable)
@@ -399,7 +390,7 @@ class PhantomConfig:
 
         Parameters
         ----------
-        variable : str
+        variable
             The name of the variable.
 
         Returns
@@ -413,12 +404,11 @@ class PhantomConfig:
 
         Parameters
         ----------
-        variable : str
+        variable
             Change the value of this variable.
         value
             Set the variable to this value.
         """
-
         if variable not in self.config:
             raise ValueError(f'{variable} not in config')
 
@@ -432,12 +422,11 @@ class PhantomConfig:
         return self
 
     def _to_phantom_lines(self, block: str = None) -> List[str]:
-        """
-        Convert config to a list of lines in Phantom style.
+        """Convert config to a list of lines in Phantom style.
 
         Optional Parameters
         -------------------
-        block : str
+        block
             Only return the lines of the specified block.
 
         Returns
@@ -445,7 +434,6 @@ class PhantomConfig:
         list
             The config file as a list of lines.
         """
-
         _length = 12
 
         only_block = None
@@ -491,7 +479,6 @@ class PhantomConfig:
 
     def _dictionary_in_blocks(self) -> Dict:
         """Return dictionary of config values with blocks as keys."""
-
         block_dict: Dict = dict()
 
         for block in self.blocks:
@@ -519,6 +506,7 @@ class PhantomConfig:
             setattr(self, entry.name, entry)
 
     def __eq__(self, other):
+        """Equivalence method."""
         return self.config == other.config
 
 
@@ -599,7 +587,6 @@ def _phantom_float_format(
     str
         The float as formatted str.
     """
-
     if math.isclose(abs(val), 0, abs_tol=1e-50):
         string = '0.000'
     elif abs(val) < 0.001:

@@ -1,20 +1,21 @@
+"""Parsers for PhantomConfig."""
+
 import datetime
 import json
 import re
 from collections import OrderedDict
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 import tomlkit
 
 
 def parse_dict_nested(dictionary: Dict[str, Dict[str, tuple]]) -> Any:
-    """
-    Parse nested dictionary.
+    """Parse nested dictionary.
 
     Parameters
     ----------
-    dictionary : Dict[str, Dict[str, tuple]]
+    dictionary
         The dictionary to parse like:
             {'block': 'variable': (value, comment), ...}.
 
@@ -25,7 +26,6 @@ def parse_dict_nested(dictionary: Dict[str, Dict[str, tuple]]) -> Any:
     block_names : list
     (variables, values, comments, blocks) : Tuple[str, Any, str, str]
     """
-
     blocks = list()
     variables = list()
     values = list()
@@ -53,12 +53,11 @@ def parse_dict_nested(dictionary: Dict[str, Dict[str, tuple]]) -> Any:
 
 
 def parse_dict_flat(dictionary: Dict) -> Any:
-    """
-    Parse flat dictionary.
+    """Parse flat dictionary.
 
     Parameters
     ----------
-    dictionary : Dict[str, Collection[Any, str, str]]
+    dictionary
         The dictionary to parse like:
             {'variable': [value, comment, block], ...}.
 
@@ -69,7 +68,6 @@ def parse_dict_flat(dictionary: Dict) -> Any:
     block_names : list
     (variables, values, comments, blocks) : Tuple[str, Any, str, str]
     """
-
     blocks = list()
     variables = list()
     values = list()
@@ -99,12 +97,11 @@ def parse_dict_flat(dictionary: Dict) -> Any:
 
 
 def parse_toml_file(filepath: Union[str, Path]) -> Any:
-    """
-    Parse TOML config file.
+    """Parse TOML config file.
 
     Parameters
     ----------
-    filepath : Union[str, Path]
+    filepath
         The file name or path to the TOML file.
 
     Returns
@@ -114,7 +111,6 @@ def parse_toml_file(filepath: Union[str, Path]) -> Any:
     block_names : list
     (variables, values, comments, blocks) : Tuple[str, Any, str, str]
     """
-
     with open(filepath, 'r') as fp:
         toml_dict = tomlkit.loads(fp.read())
 
@@ -184,12 +180,11 @@ def parse_toml_file(filepath: Union[str, Path]) -> Any:
 
 
 def parse_json_file(filepath: Union[str, Path]) -> Any:
-    """
-    Parse JSON config file.
+    """Parse JSON config file.
 
     Parameters
     ----------
-    filepath : Union[str, Path]
+    filepath
         The file name or path to the JSON file.
 
     Returns
@@ -199,7 +194,6 @@ def parse_json_file(filepath: Union[str, Path]) -> Any:
     block_names : list
     (variables, values, comments, blocks) : Tuple[str, Any, str, str]
     """
-
     with open(filepath, mode='r') as fp:
         json_dict = json.load(fp)
 
@@ -241,12 +235,11 @@ def parse_json_file(filepath: Union[str, Path]) -> Any:
 
 
 def parse_phantom_file(filepath: Union[str, Path]) -> Any:
-    """
-    Parse Phantom config file.
+    """Parse Phantom config file.
 
     Parameters
     ----------
-    filepath : Union[str, Path]
+    filepath
         The file name or path to the JSON file.
 
     Returns
@@ -256,7 +249,6 @@ def parse_phantom_file(filepath: Union[str, Path]) -> Any:
     block_names : list
     (variables, values, comments, blocks) : Tuple[str, Any, str, str]
     """
-
     with open(filepath, mode='r') as fp:
         variables = list()
         values = list()
@@ -290,14 +282,14 @@ def parse_phantom_file(filepath: Union[str, Path]) -> Any:
     return date_time, header, block_names, (variables, values, comments, blocks)
 
 
-def _get_datetime_from_header(header: List[str]) -> datetime.datetime:
+def _get_datetime_from_header(header: List[str]) -> Optional[datetime.datetime]:
     """Get datetime from Phantom timestamp in header.
 
     Phantom timestamp is like dd/mm/yyyy hh:mm:s.ms
 
     Parameters
     ----------
-    header : list
+    header
         The header as a list of strings.
 
     Returns
@@ -305,7 +297,6 @@ def _get_datetime_from_header(header: List[str]) -> datetime.datetime:
     datetime.datetime
         The datetime of the config.
     """
-
     date_time = None
     for line in header:
         if date_time is not None:
@@ -326,7 +317,7 @@ def _convert_value_type_phantom(value: str) -> Any:
 
     Parameters
     ----------
-    value : str
+    value
         The value as a string.
 
     Returns
@@ -334,7 +325,6 @@ def _convert_value_type_phantom(value: str) -> Any:
     value
         The value as appropriate type.
     """
-
     float_regexes = [r'\d*\.\d*[Ee][-+]\d*', r'-*\d*\.\d*']
     timedelta_regexes = [r'\d\d\d:\d\d']
     int_regexes = [r'-*\d+']
