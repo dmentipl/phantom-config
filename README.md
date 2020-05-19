@@ -124,12 +124,12 @@ Examples
 You can create a Phantom `.setup` file from a Python dictionary. First create the dictionary
 
 ```python
->>> setup = {}
+>>> setup = dict()
 >>> setup['gas properties'] = {
-... 'cs': (cs, 'sound speed'),
-... 'npart': (npart, 'number of particles in x direction'),
-... 'rhozero': (rhozero, 'initial density'),
-... 'ilattice': (ilattice, 'lattice type'),
+...     'cs': (cs, 'sound speed'),
+...     'npart': (npart, 'number of particles in x direction'),
+...     'rhozero': (rhozero, 'initial density'),
+...     'ilattice': (ilattice, 'lattice type'),
 ... }
 ```
 
@@ -139,7 +139,7 @@ Then you can read the dictionary with `phantomconfig`, and write to a Phantom `.
 >>> setup_config = phantomconfig.read_dict(setup)
 >>> setup_config.header = [
 ...     'input file for some particular setup routine',
-...     'short description of what it does']
+...     'short description of what it does',
 ... ]
 >>> setup_config.write_phantom('filename.setup')
 ```
