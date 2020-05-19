@@ -23,6 +23,11 @@ Install phantom-config with pip
 pip install phantomconfig
 ```
 
+Requirements
+------------
+
+Python 3.7+ and [tomlkit](https://github.com/sdispater/tomlkit).
+
 Usage
 -----
 
@@ -92,10 +97,10 @@ You can add a new variable, remove a variable, and change the value of a variabl
 ```python
 # Add new variable
 >>> input_file.add_variable(
-... 'new_var',
-... 12345678,
-... comment='Sets thing',
-... block='options controlling things',
+...     'new_var',
+...     12345678,
+...     comment='Sets thing',
+...     block='options controlling things',
 ... )
 
 # Remove a variable
