@@ -1,14 +1,14 @@
 Phantom config
 ==============
 
-> [Phantom](https://bitbucket.org/danielprice/phantom) config files: parse, convert, modify, and generate.
+> phantom-config: parse, convert, modify, and generate Phantom config files
 
-phantom-config can read Phantom `.in` and `.setup` files. (They have the same format.) You can, for example:
+phantom-config can read [Phantom](https://bitbucket.org/danielprice/phantom) `.in` and `.setup` files. (They have the same format.) You can, for example:
 
 - modify config values or comment strings,
 - add new variables or delete old ones,
 - write the config to a JSON or TOML file,
-- generate a config file from a dictionary.
+- generate a config file from a Python dictionary.
 
 [![Build Status](https://travis-ci.org/dmentipl/phantom-config.svg?branch=master)](https://travis-ci.org/dmentipl/phantom-config)
 [![Coverage Status](https://coveralls.io/repos/github/dmentipl/phantom-config/badge.svg?branch=master)](https://coveralls.io/github/dmentipl/phantom-config?branch=master)
