@@ -15,6 +15,7 @@ def parameter_sweep(
     dummy_parameters: List[str] = None,
     dependent_parameters: Dict[str, List[Dict[str, Any]]] = None,
     filetype: str = 'Phantom',
+    prefix: str = None,
 ):
     """Generate Phantom files in a parameter sweep.
 
@@ -53,6 +54,8 @@ def parameter_sweep(
         where 'a' is in parameters and has two values.
     filetype
         The file type to write. Can be 'Phantom', 'TOML', or 'JSON'.
+    prefix
+        A common prefix for the directories.
 
     Examples
     --------
@@ -110,9 +113,12 @@ def parameter_sweep(
     names = parameters.keys()
     values = [element for element in product(*parameters.values())]
     for params in values:
-        directory = Path('-'.join([f'{k}_{v}' for k, v in zip(names, params)]))
-        if not directory.exists():
-            directory.mkdir()
+        directory = '-'.join([f'{k}_{v}' for k, v in zip(names, params)])
+        if prefix is not None:
+            directory = prefix + directory
+        _directory = Path(directory)
+        if not _directory.exists():
+            _directory.mkdir()
         for idx, name in enumerate(names):
             if name not in dummy_parameters:
                 template.change_value(name, params[idx])
@@ -121,4 +127,4 @@ def parameter_sweep(
                 _params = dependent_parameters[name][_idx]
                 for key, val in _params.items():
                     template.change_value(key, val)
-        template.write_phantom(filename=directory / filename)
+        template.write_phantom(filename=_directory / filename)
