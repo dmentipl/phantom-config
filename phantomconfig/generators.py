@@ -118,6 +118,8 @@ def parameter_sweep(
         _output_dir = Path(output_dir).expanduser()
     else:
         _output_dir = Path()
+    if not _output_dir.exists():
+        _output_dir.mkdir(parents=True)
 
     names = parameters.keys()
     values = [element for element in product(*parameters.values())]
