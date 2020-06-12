@@ -224,7 +224,7 @@ class PhantomConfig:
         Parameters
         ----------
         filename
-            The name of the JSON output file.
+            The name of the Phantom output file.
         """
         with open(filename, mode='w') as fp:
             for line in self._to_phantom_lines():

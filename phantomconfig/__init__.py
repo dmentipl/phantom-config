@@ -17,6 +17,7 @@ Daniel Mentiplay, 2019-2020.
 from pathlib import Path
 from typing import Dict, Union
 
+from .generators import parameter_sweep
 from .phantomconfig import PhantomConfig
 
 
@@ -95,6 +96,6 @@ def read_toml(filename: Union[str, Path]) -> PhantomConfig:
     return PhantomConfig(filename=filename, filetype='toml')
 
 
-__all__ = ['read_config', 'read_dict', 'read_json', 'read_toml']
+__all__ = ['parameter_sweep', 'read_config', 'read_dict', 'read_json', 'read_toml']
 
 __version__ = '0.3.2'
