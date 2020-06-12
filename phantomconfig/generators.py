@@ -2,7 +2,7 @@
 
 from itertools import product
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from .phantomconfig import PhantomConfig
 
@@ -16,6 +16,7 @@ def parameter_sweep(
     dependent_parameters: Dict[str, List[Dict[str, Any]]] = None,
     filetype: str = 'Phantom',
     prefix: str = None,
+    output_dir: Union[str, Path] = None,
 ):
     """Generate Phantom files in a parameter sweep.
 
@@ -55,7 +56,11 @@ def parameter_sweep(
     filetype
         The file type to write. Can be 'Phantom', 'TOML', or 'JSON'.
     prefix
-        A common prefix for the directories.
+        A common prefix for the directories containing each config
+        file.
+    output_dir
+        A path in which to output the directories containing each config
+        file.
 
     Examples
     --------
@@ -109,6 +114,10 @@ def parameter_sweep(
         raise ValueError(
             'dependent_parameters keys must be a subset of keys in parameters'
         )
+    if output_dir is not None:
+        _output_dir = Path(output_dir).expanduser()
+    else:
+        _output_dir = Path()
 
     names = parameters.keys()
     values = [element for element in product(*parameters.values())]
@@ -116,7 +125,7 @@ def parameter_sweep(
         directory = '-'.join([f'{k}_{v}' for k, v in zip(names, params)])
         if prefix is not None:
             directory = prefix + directory
-        _directory = Path(directory)
+        _directory = _output_dir / directory
         if not _directory.exists():
             _directory.mkdir()
         for idx, name in enumerate(names):
