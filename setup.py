@@ -20,6 +20,7 @@ setup(
     name='phantomconfig',
     version=version,
     author='Daniel Mentiplay',
+    author_email='d.mentiplay@gmail.com',
     packages=['phantomconfig'],
     url='http://github.com/dmentipl/phantom-config',
     license='MIT',
