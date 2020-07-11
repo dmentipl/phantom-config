@@ -172,3 +172,14 @@ for alpha in alphas:
     infile.change_value('alpha', alpha)
     infile.write_phantom(f'alpha={alpha}.in')
 ```
+
+See also
+--------
+
+### phantom-build
+
+[phantom-build](https://github.com/dmentipl/phantom-build) is a Python package designed to make it easy to generate reproducible Phantom builds for writing reproducible papers. You can generate `.in` and `.setup` files with phantom-config and then, with phantom-build, you can compile Phantom and set up multiple runs, and schedule them via, for example, the Slurm job scheduler.
+
+### phantom-setup
+
+[phantom-setup](https://github.com/dmentipl/phantom-setup) is a (work in progress) Python package designed to set up Phantom initial conditions in pure Python, i.e. with no Fortran dependencies. It uses NumPy and Numba to achieve Fortran like performance for computationally expensive operations.
