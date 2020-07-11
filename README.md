@@ -3,7 +3,7 @@ Phantom config
 
 > phantom-config: parse, convert, modify, and generate Phantom config files
 
-phantom-config can read [Phantom](https://bitbucket.org/danielprice/phantom) `.in` and `.setup` files. (They have the same format.) You can, for example:
+phantom-config can read [Phantom](https://github.com/danieljprice/phantom) `.in` and `.setup` files. (They have the same format.) You can, for example:
 
 - modify config values or comment strings,
 - add new variables or delete old ones,
