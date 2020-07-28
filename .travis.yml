@@ -9,12 +9,12 @@ install:
 
 script:
   - python -m coverage run -m pytest
-  - isort --check-only -rc
-  - black --check --skip-string-normalization .
-  - mypy --no-strict-optional --ignore-missing-imports phantomconfig tests
+  - python -m isort --check-only .
+  - python -m black --check --skip-string-normalization .
+  - python -m mypy --no-strict-optional --ignore-missing-imports phantomconfig tests
 
 after_success:
-  - coveralls
+  - python -m coveralls
 
 notifications:
   email:

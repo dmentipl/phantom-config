@@ -20,7 +20,7 @@ Installation
 Install phantom-config with pip
 
 ```bash
-pip install phantomconfig
+python -m pip install phantomconfig
 ```
 
 Requirements
