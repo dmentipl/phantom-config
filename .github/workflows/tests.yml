@@ -1,0 +1,39 @@
+name: Tests
+
+on: [pull_request, push]
+jobs:
+  Formatting:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v2
+    - name: pip install
+      run:
+        pip install black coverage coveralls isort mypy pytest tomlkit
+        pip list
+    - name: isort
+      run: |
+        python -m isort --check-only .
+    - name: black
+      run: |
+        python -m black --check --skip-string-normalization .
+    - name: mypy
+      run: |
+        python -m mypy --no-strict-optional --ignore-missing-imports phantomconfig tests
+  Tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@v2
+    - name: pip install
+      run:
+        pip install black coverage coveralls isort mypy pytest tomlkit
+        pip list
+    - name: pytest
+      run: |
+        python -m coverage run -m pytest
+        python -m coveralls --service=github
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
