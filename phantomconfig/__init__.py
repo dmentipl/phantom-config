@@ -11,7 +11,7 @@ phantomconfig is designed to:
 
 See [Phantom](https://github.com/danieljprice/phantom/) for details on Phantom.
 
-Daniel Mentiplay, 2019-2020.
+Daniel Mentiplay, 2019-2021.
 """
 
 from pathlib import Path
