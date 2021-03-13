@@ -9,7 +9,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: pip install
-      run:
+      run: |
         pip install black coverage coveralls isort mypy pytest tomlkit
         pip list
     - name: isort
@@ -28,7 +28,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: pip install
-      run:
+      run: |
         pip install black coverage coveralls isort mypy pytest tomlkit
         pip list
     - name: pytest
