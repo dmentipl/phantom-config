@@ -349,7 +349,11 @@ class PhantomConfig:
         }
 
     def add_variable(
-        self, variable: str, value: Any, comment: str = None, block: str = None,
+        self,
+        variable: str,
+        value: Any,
+        comment: str = None,
+        block: str = None,
     ) -> PhantomConfig:
         """Add a variable to the config.
 
