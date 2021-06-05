@@ -11,7 +11,7 @@ phantom-config can read [Phantom](https://github.com/danieljprice/phantom) `.in`
 - generate a config file from a Python dictionary.
 
 [![Build Status](https://github.com/dmentipl/phantom-config/actions/workflows/tests.yml/badge.svg)](https://github.com/dmentipl/phantom-config/actions)
-[![Coverage Status](https://coveralls.io/repos/github/dmentipl/phantom-config/badge.svg?branch=master)](https://coveralls.io/github/dmentipl/phantom-config?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/dmentipl/phantom-config/badge.svg?branch=main)](https://coveralls.io/github/dmentipl/phantom-config?branch=main)
 [![PyPI](https://img.shields.io/pypi/v/phantomconfig)](https://pypi.org/project/phantomconfig/)
 
 Installation
