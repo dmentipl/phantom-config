@@ -1,6 +1,6 @@
 build/*
 dist/*
-phantomconfig.egg-info/*
+src/phantomconfig.egg-info/*
 .coverage
 htmlcov
 .mypy_cache
