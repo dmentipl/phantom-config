@@ -1,2 +1,4 @@
-include *.md
+graft src
+include CHANGELOG.md
 include LICENSE
+include README.md
