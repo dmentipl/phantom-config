@@ -22,6 +22,7 @@ Types of changes:
 - Moved setup.py config to setup.cfg.
 - Added pyproject.toml file.
 - Removed .isort.cfg.
+- Make tomlkit an optional dependency.
 
 ## [0.3.3] - 2020-07-11
 
