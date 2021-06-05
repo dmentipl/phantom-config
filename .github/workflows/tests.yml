@@ -20,7 +20,7 @@ jobs:
         python -m black --check --skip-string-normalization .
     - name: mypy
       run: |
-        python -m mypy --no-strict-optional --ignore-missing-imports phantomconfig tests
+        python -m mypy --no-strict-optional --ignore-missing-imports src tests
   Tests:
     runs-on: ubuntu-latest
     strategy:
