@@ -17,10 +17,10 @@ jobs:
         python -m isort --check-only .
     - name: black
       run: |
-        python -m black --check --skip-string-normalization .
+        python -m black --check .
     - name: mypy
       run: |
-        python -m mypy --no-strict-optional --ignore-missing-imports src tests
+        python -m mypy src tests
   Tests:
     runs-on: ubuntu-latest
     strategy:
