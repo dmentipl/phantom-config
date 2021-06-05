@@ -7,8 +7,6 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
-import tomlkit
-
 
 def parse_dict_nested(dictionary: Dict[str, Dict[str, tuple]]) -> Any:
     """Parse nested dictionary.
@@ -111,8 +109,10 @@ def parse_toml_file(filepath: Union[str, Path]) -> Any:
     block_names : list
     (variables, values, comments, blocks) : Tuple[str, Any, str, str]
     """
+    from tomlkit import loads
+
     with open(filepath, 'r') as fp:
-        toml_dict = tomlkit.loads(fp.read())
+        toml_dict = loads(fp.read())
 
     blocks = list()
     variables = list()
