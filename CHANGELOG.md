@@ -15,6 +15,8 @@ Types of changes:
 
 ## [Unreleased]
 
+## [0.3.4] - 2021-06-05
+
 ### Changed
 
 - Moved from Travis CI to GitHub actions for tests/CI.

@@ -98,4 +98,4 @@ def read_toml(filename: Union[str, Path]) -> PhantomConfig:
 
 __all__ = ['parameter_sweep', 'read_config', 'read_dict', 'read_json', 'read_toml']
 
-__version__ = '0.3.3'
+__version__ = '0.3.4'
