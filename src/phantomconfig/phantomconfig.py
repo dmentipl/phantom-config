@@ -10,8 +10,6 @@ from collections import namedtuple
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-import tomlkit
-
 from .parsers import (
     parse_dict_flat,
     parse_dict_nested,
@@ -171,6 +169,8 @@ class PhantomConfig:
         filename
             The name of the TOML output file.
         """
+        import tomlkit
+
         # TODO: writing to TOML does not preserve the comments.
 
         document = tomlkit.document()

@@ -26,7 +26,7 @@ python -m pip install phantomconfig
 Requirements
 ------------
 
-Python 3.7+ and [tomlkit](https://github.com/sdispater/tomlkit).
+Python 3.7+ only. Optionally [tomlkit](https://github.com/sdispater/tomlkit) for read/write to TOML format.
 
 Usage
 -----
